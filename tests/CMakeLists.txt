@@ -13,6 +13,7 @@ FetchContent_MakeAvailable(googletest)
 
 add_executable(DataTableTests
   test_DataTable.cpp
+  test_DataTable_PythonGeneratedIndex.cpp
 )
 
 target_link_libraries(DataTableTests
@@ -22,6 +23,11 @@ target_link_libraries(DataTableTests
 )
 
 target_compile_features(DataTableTests PRIVATE cxx_std_17)
+
+target_compile_definitions(DataTableTests
+  PRIVATE
+    DATATABLE_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+)
 
 include(GoogleTest)
 gtest_discover_tests(DataTableTests)

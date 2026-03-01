@@ -1,25 +1,55 @@
 {
-  "tests": 3,
+  "tests": 9,
   "name": "AllTests",
   "testsuites": [
     {
       "name": "DataTable",
-      "tests": 3,
+      "tests": 9,
       "testsuite": [
         {
-          "name": "DefaultConstructor_StoresEmptyPaths",
+          "name": "ConstructorAndSetters_StorePaths",
           "file": "\/Users\/nathan\/github\/DataTable\/tests\/test_DataTable.cpp",
-          "line": 7
+          "line": 98
         },
         {
-          "name": "Constructor_SetsPaths",
+          "name": "MetadataAccess_ThrowsBeforeParse",
           "file": "\/Users\/nathan\/github\/DataTable\/tests\/test_DataTable.cpp",
-          "line": 13
+          "line": 109
         },
         {
-          "name": "Setters_UpdatePaths",
+          "name": "Parse_WritesHeaderRowBin_AndGettersReadItBack",
           "file": "\/Users\/nathan\/github\/DataTable\/tests\/test_DataTable.cpp",
-          "line": 19
+          "line": 120
+        },
+        {
+          "name": "Parse_PreservesWhitespaceInsideQuotes",
+          "file": "\/Users\/nathan\/github\/DataTable\/tests\/test_DataTable.cpp",
+          "line": 156
+        },
+        {
+          "name": "Parse_HandlesEscapedQuotesInHeader",
+          "file": "\/Users\/nathan\/github\/DataTable\/tests\/test_DataTable.cpp",
+          "line": 169
+        },
+        {
+          "name": "GetColumnHeader_OutOfRangeThrows",
+          "file": "\/Users\/nathan\/github\/DataTable\/tests\/test_DataTable.cpp",
+          "line": 182
+        },
+        {
+          "name": "Parse_HeaderLongerThan255BytesThrows",
+          "file": "\/Users\/nathan\/github\/DataTable\/tests\/test_DataTable.cpp",
+          "line": 195
+        },
+        {
+          "name": "Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10",
+          "file": "\/Users\/nathan\/github\/DataTable\/tests\/test_DataTable.cpp",
+          "line": 206
+        },
+        {
+          "name": "Parse_RowOffsets_FromPythonIndex_Threads1To10",
+          "file": "\/Users\/nathan\/github\/DataTable\/tests\/test_DataTable_PythonGeneratedIndex.cpp",
+          "line": 67
         }
       ]
     }

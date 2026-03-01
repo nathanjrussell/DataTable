@@ -209,6 +209,30 @@ test_DataTable.cpp.s:
 	cd /Users/nathan/github/DataTable/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/DataTableTests.dir/build.make tests/CMakeFiles/DataTableTests.dir/test_DataTable.cpp.s
 .PHONY : test_DataTable.cpp.s
 
+test_DataTable_PythonGeneratedIndex.o: test_DataTable_PythonGeneratedIndex.cpp.o
+.PHONY : test_DataTable_PythonGeneratedIndex.o
+
+# target to build an object file
+test_DataTable_PythonGeneratedIndex.cpp.o:
+	cd /Users/nathan/github/DataTable/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/DataTableTests.dir/build.make tests/CMakeFiles/DataTableTests.dir/test_DataTable_PythonGeneratedIndex.cpp.o
+.PHONY : test_DataTable_PythonGeneratedIndex.cpp.o
+
+test_DataTable_PythonGeneratedIndex.i: test_DataTable_PythonGeneratedIndex.cpp.i
+.PHONY : test_DataTable_PythonGeneratedIndex.i
+
+# target to preprocess a source file
+test_DataTable_PythonGeneratedIndex.cpp.i:
+	cd /Users/nathan/github/DataTable/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/DataTableTests.dir/build.make tests/CMakeFiles/DataTableTests.dir/test_DataTable_PythonGeneratedIndex.cpp.i
+.PHONY : test_DataTable_PythonGeneratedIndex.cpp.i
+
+test_DataTable_PythonGeneratedIndex.s: test_DataTable_PythonGeneratedIndex.cpp.s
+.PHONY : test_DataTable_PythonGeneratedIndex.s
+
+# target to generate assembly for a file
+test_DataTable_PythonGeneratedIndex.cpp.s:
+	cd /Users/nathan/github/DataTable/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/DataTableTests.dir/build.make tests/CMakeFiles/DataTableTests.dir/test_DataTable_PythonGeneratedIndex.cpp.s
+.PHONY : test_DataTable_PythonGeneratedIndex.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -226,6 +250,9 @@ help:
 	@echo "... test_DataTable.o"
 	@echo "... test_DataTable.i"
 	@echo "... test_DataTable.s"
+	@echo "... test_DataTable_PythonGeneratedIndex.o"
+	@echo "... test_DataTable_PythonGeneratedIndex.i"
+	@echo "... test_DataTable_PythonGeneratedIndex.s"
 .PHONY : help
 
 

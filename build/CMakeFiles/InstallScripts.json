@@ -2,6 +2,7 @@
 	"InstallScripts" : 
 	[
 		"/Users/nathan/github/DataTable/build/cmake_install.cmake",
+		"/Users/nathan/github/DataTable/build/_deps/nlohmann_json-build/cmake_install.cmake",
 		"/Users/nathan/github/DataTable/build/tests/cmake_install.cmake",
 		"/Users/nathan/github/DataTable/build/_deps/googletest-build/cmake_install.cmake",
 		"/Users/nathan/github/DataTable/build/_deps/googletest-build/googlemock/cmake_install.cmake",

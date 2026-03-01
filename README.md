@@ -28,6 +28,20 @@ This project assumes RFC 4180-style CSV with the following project-specific norm
 - Treat `\r\n` the same as `\n` both inside and outside quoted fields.
 - If a newline occurs inside a quoted field, it is part of the field value and does not terminate the record.
 
+## Header row encoding constraints
+
+- Column header strings are stored in `meta_data/header_row.bin` using a **1-byte length prefix** followed by the header bytes.
+- Therefore, each header string (after applying the trimming rules above) must be **0–255 bytes**.
+
+# Parsing Goal
+
+The ultimate goal for `DataTable` is to:
+
+1. Accept a CSV file.
+2. Map categorical string values to integer ids (for compact/storage-efficient representation).
+3. Transpose the encoded data so downstream chi-square analysis can be performed columnwise.
+4. Support reverse mapping from integer ids back to the original strings so results can be reported in human-readable form.
+
 ## Build
 
 ```sh

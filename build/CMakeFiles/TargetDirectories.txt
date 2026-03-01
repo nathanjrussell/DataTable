@@ -1,4 +1,5 @@
 /Users/nathan/github/DataTable/build/CMakeFiles/DataTable.dir
+/Users/nathan/github/DataTable/build/CMakeFiles/example_row_offsets.dir
 /Users/nathan/github/DataTable/build/CMakeFiles/test.dir
 /Users/nathan/github/DataTable/build/CMakeFiles/edit_cache.dir
 /Users/nathan/github/DataTable/build/CMakeFiles/rebuild_cache.dir
@@ -6,6 +7,13 @@
 /Users/nathan/github/DataTable/build/CMakeFiles/install.dir
 /Users/nathan/github/DataTable/build/CMakeFiles/install/local.dir
 /Users/nathan/github/DataTable/build/CMakeFiles/install/strip.dir
+/Users/nathan/github/DataTable/build/_deps/nlohmann_json-build/CMakeFiles/test.dir
+/Users/nathan/github/DataTable/build/_deps/nlohmann_json-build/CMakeFiles/edit_cache.dir
+/Users/nathan/github/DataTable/build/_deps/nlohmann_json-build/CMakeFiles/rebuild_cache.dir
+/Users/nathan/github/DataTable/build/_deps/nlohmann_json-build/CMakeFiles/list_install_components.dir
+/Users/nathan/github/DataTable/build/_deps/nlohmann_json-build/CMakeFiles/install.dir
+/Users/nathan/github/DataTable/build/_deps/nlohmann_json-build/CMakeFiles/install/local.dir
+/Users/nathan/github/DataTable/build/_deps/nlohmann_json-build/CMakeFiles/install/strip.dir
 /Users/nathan/github/DataTable/build/tests/CMakeFiles/DataTableTests.dir
 /Users/nathan/github/DataTable/build/tests/CMakeFiles/test.dir
 /Users/nathan/github/DataTable/build/tests/CMakeFiles/edit_cache.dir

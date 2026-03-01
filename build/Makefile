@@ -185,6 +185,19 @@ DataTable/fast:
 .PHONY : DataTable/fast
 
 #=============================================================================
+# Target rules for targets named example_row_offsets
+
+# Build rule for target.
+example_row_offsets: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 example_row_offsets
+.PHONY : example_row_offsets
+
+# fast build rule for target.
+example_row_offsets/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/example_row_offsets.dir/build.make CMakeFiles/example_row_offsets.dir/build
+.PHONY : example_row_offsets/fast
+
+#=============================================================================
 # Target rules for targets named DataTableTests
 
 # Build rule for target.
@@ -249,6 +262,30 @@ gtest_main/fast:
 	$(MAKE) $(MAKESILENT) -f _deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/build.make _deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/build
 .PHONY : gtest_main/fast
 
+examples/example_row_offsets.o: examples/example_row_offsets.cpp.o
+.PHONY : examples/example_row_offsets.o
+
+# target to build an object file
+examples/example_row_offsets.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/example_row_offsets.dir/build.make CMakeFiles/example_row_offsets.dir/examples/example_row_offsets.cpp.o
+.PHONY : examples/example_row_offsets.cpp.o
+
+examples/example_row_offsets.i: examples/example_row_offsets.cpp.i
+.PHONY : examples/example_row_offsets.i
+
+# target to preprocess a source file
+examples/example_row_offsets.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/example_row_offsets.dir/build.make CMakeFiles/example_row_offsets.dir/examples/example_row_offsets.cpp.i
+.PHONY : examples/example_row_offsets.cpp.i
+
+examples/example_row_offsets.s: examples/example_row_offsets.cpp.s
+.PHONY : examples/example_row_offsets.s
+
+# target to generate assembly for a file
+examples/example_row_offsets.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/example_row_offsets.dir/build.make CMakeFiles/example_row_offsets.dir/examples/example_row_offsets.cpp.s
+.PHONY : examples/example_row_offsets.cpp.s
+
 src/DataTable.o: src/DataTable.cpp.o
 .PHONY : src/DataTable.o
 
@@ -288,10 +325,14 @@ help:
 	@echo "... test"
 	@echo "... DataTable"
 	@echo "... DataTableTests"
+	@echo "... example_row_offsets"
 	@echo "... gmock"
 	@echo "... gmock_main"
 	@echo "... gtest"
 	@echo "... gtest_main"
+	@echo "... examples/example_row_offsets.o"
+	@echo "... examples/example_row_offsets.i"
+	@echo "... examples/example_row_offsets.s"
 	@echo "... src/DataTable.o"
 	@echo "... src/DataTable.i"
 	@echo "... src/DataTable.s"

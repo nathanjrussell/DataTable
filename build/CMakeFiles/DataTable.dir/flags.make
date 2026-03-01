@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/Users/nathan/github/DataTable/include
+CXX_INCLUDES = -I/Users/nathan/github/DataTable/include -I/Users/nathan/github/DataTable/build/_deps/nlohmann_json-src/include
 
 CXX_FLAGSarm64 = -g -std=gnu++17 -arch arm64
 

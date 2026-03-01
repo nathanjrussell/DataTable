@@ -1,4 +1,10 @@
-DataTable.DefaultConstructor_StoresEmptyPaths 1 0.00309671
-DataTable.Constructor_SetsPaths 1 0.00268012
-DataTable.Setters_UpdatePaths 1 0.00285021
+DataTable.ConstructorAndSetters_StorePaths 10 0.000526263
+DataTable.MetadataAccess_ThrowsBeforeParse 10 0.000460867
+DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack 10 0.000587304
+DataTable.Parse_PreservesWhitespaceInsideQuotes 10 0.000588596
+DataTable.Parse_HandlesEscapedQuotesInHeader 10 0.000553733
+DataTable.GetColumnHeader_OutOfRangeThrows 10 0.000531342
+DataTable.Parse_HeaderLongerThan255BytesThrows 10 0.00051805
+DataTable.Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10 8 0.0266873
+DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10 5 0.108496
 ---
