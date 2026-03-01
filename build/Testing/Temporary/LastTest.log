@@ -1,10 +1,10 @@
-Start testing: Mar 01 16:14 EST
+Start testing: Mar 01 16:50 EST
 ----------------------------------------------------------
-1/9 Testing: DataTable.ConstructorAndSetters_StorePaths
-1/9 Test: DataTable.ConstructorAndSetters_StorePaths
+1/11 Testing: DataTable.ConstructorAndSetters_StorePaths
+1/11 Test: DataTable.ConstructorAndSetters_StorePaths
 Command: "/Users/nathan/github/DataTable/build/tests/DataTableTests" "--gtest_filter=DataTable.ConstructorAndSetters_StorePaths" "--gtest_also_run_disabled_tests"
 Directory: /Users/nathan/github/DataTable/build/tests
-"DataTable.ConstructorAndSetters_StorePaths" start time: Mar 01 16:14 EST
+"DataTable.ConstructorAndSetters_StorePaths" start time: Mar 01 16:50 EST
 Output:
 ----------------------------------------------------------
 Running main() from /Users/nathan/github/DataTable/build/_deps/googletest-src/googletest/src/gtest_main.cc
@@ -20,18 +20,18 @@ Note: Google Test filter = DataTable.ConstructorAndSetters_StorePaths
 [==========] 1 test from 1 test suite ran. (0 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.01 sec
+Test time =   0.00 sec
 ----------------------------------------------------------
 Test Passed.
-"DataTable.ConstructorAndSetters_StorePaths" end time: Mar 01 16:14 EST
+"DataTable.ConstructorAndSetters_StorePaths" end time: Mar 01 16:50 EST
 "DataTable.ConstructorAndSetters_StorePaths" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-2/9 Testing: DataTable.MetadataAccess_ThrowsBeforeParse
-2/9 Test: DataTable.MetadataAccess_ThrowsBeforeParse
+2/11 Testing: DataTable.MetadataAccess_ThrowsBeforeParse
+2/11 Test: DataTable.MetadataAccess_ThrowsBeforeParse
 Command: "/Users/nathan/github/DataTable/build/tests/DataTableTests" "--gtest_filter=DataTable.MetadataAccess_ThrowsBeforeParse" "--gtest_also_run_disabled_tests"
 Directory: /Users/nathan/github/DataTable/build/tests
-"DataTable.MetadataAccess_ThrowsBeforeParse" start time: Mar 01 16:14 EST
+"DataTable.MetadataAccess_ThrowsBeforeParse" start time: Mar 01 16:50 EST
 Output:
 ----------------------------------------------------------
 Running main() from /Users/nathan/github/DataTable/build/_deps/googletest-src/googletest/src/gtest_main.cc
@@ -50,15 +50,15 @@ Note: Google Test filter = DataTable.MetadataAccess_ThrowsBeforeParse
 Test time =   0.00 sec
 ----------------------------------------------------------
 Test Passed.
-"DataTable.MetadataAccess_ThrowsBeforeParse" end time: Mar 01 16:14 EST
+"DataTable.MetadataAccess_ThrowsBeforeParse" end time: Mar 01 16:50 EST
 "DataTable.MetadataAccess_ThrowsBeforeParse" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-3/9 Testing: DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack
-3/9 Test: DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack
+3/11 Testing: DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack
+3/11 Test: DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack
 Command: "/Users/nathan/github/DataTable/build/tests/DataTableTests" "--gtest_filter=DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack" "--gtest_also_run_disabled_tests"
 Directory: /Users/nathan/github/DataTable/build/tests
-"DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack" start time: Mar 01 16:14 EST
+"DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack" start time: Mar 01 16:50 EST
 Output:
 ----------------------------------------------------------
 Running main() from /Users/nathan/github/DataTable/build/_deps/googletest-src/googletest/src/gtest_main.cc
@@ -67,25 +67,25 @@ Note: Google Test filter = DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBa
 [----------] Global test environment set-up.
 [----------] 1 test from DataTable
 [ RUN      ] DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack
-[       OK ] DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack (1 ms)
-[----------] 1 test from DataTable (1 ms total)
+[       OK ] DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack (0 ms)
+[----------] 1 test from DataTable (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (1 ms total)
+[==========] 1 test from 1 test suite ran. (0 ms total)
 [  PASSED  ] 1 test.
 <end of output>
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack" end time: Mar 01 16:14 EST
+"DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack" end time: Mar 01 16:50 EST
 "DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-4/9 Testing: DataTable.Parse_PreservesWhitespaceInsideQuotes
-4/9 Test: DataTable.Parse_PreservesWhitespaceInsideQuotes
+4/11 Testing: DataTable.Parse_PreservesWhitespaceInsideQuotes
+4/11 Test: DataTable.Parse_PreservesWhitespaceInsideQuotes
 Command: "/Users/nathan/github/DataTable/build/tests/DataTableTests" "--gtest_filter=DataTable.Parse_PreservesWhitespaceInsideQuotes" "--gtest_also_run_disabled_tests"
 Directory: /Users/nathan/github/DataTable/build/tests
-"DataTable.Parse_PreservesWhitespaceInsideQuotes" start time: Mar 01 16:14 EST
+"DataTable.Parse_PreservesWhitespaceInsideQuotes" start time: Mar 01 16:50 EST
 Output:
 ----------------------------------------------------------
 Running main() from /Users/nathan/github/DataTable/build/_deps/googletest-src/googletest/src/gtest_main.cc
@@ -94,25 +94,25 @@ Note: Google Test filter = DataTable.Parse_PreservesWhitespaceInsideQuotes
 [----------] Global test environment set-up.
 [----------] 1 test from DataTable
 [ RUN      ] DataTable.Parse_PreservesWhitespaceInsideQuotes
-[       OK ] DataTable.Parse_PreservesWhitespaceInsideQuotes (1 ms)
-[----------] 1 test from DataTable (1 ms total)
+[       OK ] DataTable.Parse_PreservesWhitespaceInsideQuotes (0 ms)
+[----------] 1 test from DataTable (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (1 ms total)
+[==========] 1 test from 1 test suite ran. (0 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.01 sec
+Test time =   0.00 sec
 ----------------------------------------------------------
 Test Passed.
-"DataTable.Parse_PreservesWhitespaceInsideQuotes" end time: Mar 01 16:14 EST
+"DataTable.Parse_PreservesWhitespaceInsideQuotes" end time: Mar 01 16:50 EST
 "DataTable.Parse_PreservesWhitespaceInsideQuotes" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-5/9 Testing: DataTable.Parse_HandlesEscapedQuotesInHeader
-5/9 Test: DataTable.Parse_HandlesEscapedQuotesInHeader
+5/11 Testing: DataTable.Parse_HandlesEscapedQuotesInHeader
+5/11 Test: DataTable.Parse_HandlesEscapedQuotesInHeader
 Command: "/Users/nathan/github/DataTable/build/tests/DataTableTests" "--gtest_filter=DataTable.Parse_HandlesEscapedQuotesInHeader" "--gtest_also_run_disabled_tests"
 Directory: /Users/nathan/github/DataTable/build/tests
-"DataTable.Parse_HandlesEscapedQuotesInHeader" start time: Mar 01 16:14 EST
+"DataTable.Parse_HandlesEscapedQuotesInHeader" start time: Mar 01 16:50 EST
 Output:
 ----------------------------------------------------------
 Running main() from /Users/nathan/github/DataTable/build/_deps/googletest-src/googletest/src/gtest_main.cc
@@ -128,18 +128,18 @@ Note: Google Test filter = DataTable.Parse_HandlesEscapedQuotesInHeader
 [==========] 1 test from 1 test suite ran. (0 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.01 sec
+Test time =   0.00 sec
 ----------------------------------------------------------
 Test Passed.
-"DataTable.Parse_HandlesEscapedQuotesInHeader" end time: Mar 01 16:14 EST
+"DataTable.Parse_HandlesEscapedQuotesInHeader" end time: Mar 01 16:50 EST
 "DataTable.Parse_HandlesEscapedQuotesInHeader" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-6/9 Testing: DataTable.GetColumnHeader_OutOfRangeThrows
-6/9 Test: DataTable.GetColumnHeader_OutOfRangeThrows
+6/11 Testing: DataTable.GetColumnHeader_OutOfRangeThrows
+6/11 Test: DataTable.GetColumnHeader_OutOfRangeThrows
 Command: "/Users/nathan/github/DataTable/build/tests/DataTableTests" "--gtest_filter=DataTable.GetColumnHeader_OutOfRangeThrows" "--gtest_also_run_disabled_tests"
 Directory: /Users/nathan/github/DataTable/build/tests
-"DataTable.GetColumnHeader_OutOfRangeThrows" start time: Mar 01 16:14 EST
+"DataTable.GetColumnHeader_OutOfRangeThrows" start time: Mar 01 16:50 EST
 Output:
 ----------------------------------------------------------
 Running main() from /Users/nathan/github/DataTable/build/_deps/googletest-src/googletest/src/gtest_main.cc
@@ -158,15 +158,15 @@ Note: Google Test filter = DataTable.GetColumnHeader_OutOfRangeThrows
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"DataTable.GetColumnHeader_OutOfRangeThrows" end time: Mar 01 16:14 EST
+"DataTable.GetColumnHeader_OutOfRangeThrows" end time: Mar 01 16:50 EST
 "DataTable.GetColumnHeader_OutOfRangeThrows" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-7/9 Testing: DataTable.Parse_HeaderLongerThan255BytesThrows
-7/9 Test: DataTable.Parse_HeaderLongerThan255BytesThrows
+7/11 Testing: DataTable.Parse_HeaderLongerThan255BytesThrows
+7/11 Test: DataTable.Parse_HeaderLongerThan255BytesThrows
 Command: "/Users/nathan/github/DataTable/build/tests/DataTableTests" "--gtest_filter=DataTable.Parse_HeaderLongerThan255BytesThrows" "--gtest_also_run_disabled_tests"
 Directory: /Users/nathan/github/DataTable/build/tests
-"DataTable.Parse_HeaderLongerThan255BytesThrows" start time: Mar 01 16:14 EST
+"DataTable.Parse_HeaderLongerThan255BytesThrows" start time: Mar 01 16:50 EST
 Output:
 ----------------------------------------------------------
 Running main() from /Users/nathan/github/DataTable/build/_deps/googletest-src/googletest/src/gtest_main.cc
@@ -182,18 +182,18 @@ Note: Google Test filter = DataTable.Parse_HeaderLongerThan255BytesThrows
 [==========] 1 test from 1 test suite ran. (0 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.01 sec
+Test time =   0.00 sec
 ----------------------------------------------------------
 Test Passed.
-"DataTable.Parse_HeaderLongerThan255BytesThrows" end time: Mar 01 16:14 EST
+"DataTable.Parse_HeaderLongerThan255BytesThrows" end time: Mar 01 16:50 EST
 "DataTable.Parse_HeaderLongerThan255BytesThrows" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-8/9 Testing: DataTable.Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10
-8/9 Test: DataTable.Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10
+8/11 Testing: DataTable.Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10
+8/11 Test: DataTable.Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10
 Command: "/Users/nathan/github/DataTable/build/tests/DataTableTests" "--gtest_filter=DataTable.Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10" "--gtest_also_run_disabled_tests"
 Directory: /Users/nathan/github/DataTable/build/tests
-"DataTable.Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10" start time: Mar 01 16:14 EST
+"DataTable.Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10" start time: Mar 01 16:50 EST
 Output:
 ----------------------------------------------------------
 Running main() from /Users/nathan/github/DataTable/build/_deps/googletest-src/googletest/src/gtest_main.cc
@@ -212,15 +212,69 @@ Note: Google Test filter = DataTable.Parse_RowOffsetsPredictable_UnevenRowsWithQ
 Test time =   0.21 sec
 ----------------------------------------------------------
 Test Passed.
-"DataTable.Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10" end time: Mar 01 16:14 EST
+"DataTable.Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10" end time: Mar 01 16:50 EST
 "DataTable.Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-9/9 Testing: DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10
-9/9 Test: DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10
+9/11 Testing: DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads1
+9/11 Test: DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads1
+Command: "/Users/nathan/github/DataTable/build/tests/DataTableTests" "--gtest_filter=DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads1" "--gtest_also_run_disabled_tests"
+Directory: /Users/nathan/github/DataTable/build/tests
+"DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads1" start time: Mar 01 16:50 EST
+Output:
+----------------------------------------------------------
+Running main() from /Users/nathan/github/DataTable/build/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads1
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from DataTable
+[ RUN      ] DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads1
+[       OK ] DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads1 (0 ms)
+[----------] 1 test from DataTable (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads1" end time: Mar 01 16:50 EST
+"DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads1" time elapsed: 00:00:00
+----------------------------------------------------------
+
+10/11 Testing: DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads2To5
+10/11 Test: DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads2To5
+Command: "/Users/nathan/github/DataTable/build/tests/DataTableTests" "--gtest_filter=DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads2To5" "--gtest_also_run_disabled_tests"
+Directory: /Users/nathan/github/DataTable/build/tests
+"DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads2To5" start time: Mar 01 16:50 EST
+Output:
+----------------------------------------------------------
+Running main() from /Users/nathan/github/DataTable/build/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads2To5
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from DataTable
+[ RUN      ] DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads2To5
+[       OK ] DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads2To5 (0 ms)
+[----------] 1 test from DataTable (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads2To5" end time: Mar 01 16:50 EST
+"DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads2To5" time elapsed: 00:00:00
+----------------------------------------------------------
+
+11/11 Testing: DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10
+11/11 Test: DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10
 Command: "/Users/nathan/github/DataTable/build/tests/DataTableTests" "--gtest_filter=DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10" "--gtest_also_run_disabled_tests"
 Directory: /Users/nathan/github/DataTable/build/tests
-"DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10" start time: Mar 01 16:14 EST
+"DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10" start time: Mar 01 16:50 EST
 Output:
 ----------------------------------------------------------
 Running main() from /Users/nathan/github/DataTable/build/_deps/googletest-src/googletest/src/gtest_main.cc
@@ -229,18 +283,18 @@ Note: Google Test filter = DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To
 [----------] Global test environment set-up.
 [----------] 1 test from DataTable
 [ RUN      ] DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10
-[       OK ] DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10 (537 ms)
-[----------] 1 test from DataTable (537 ms total)
+[       OK ] DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10 (534 ms)
+[----------] 1 test from DataTable (534 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (537 ms total)
+[==========] 1 test from 1 test suite ran. (534 ms total)
 [  PASSED  ] 1 test.
 <end of output>
 Test time =   0.54 sec
 ----------------------------------------------------------
 Test Passed.
-"DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10" end time: Mar 01 16:14 EST
+"DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10" end time: Mar 01 16:50 EST
 "DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-End testing: Mar 01 16:14 EST
+End testing: Mar 01 16:50 EST

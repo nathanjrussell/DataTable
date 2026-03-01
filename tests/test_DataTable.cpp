@@ -232,3 +232,26 @@ TEST(DataTable, Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads
     }
   }
 }
+
+TEST(DataTable, Parse_ThrowsWhenRowHasMissingColumn_Threads1) {
+  const auto outDir = makeTempDir("missing_col_threads1");
+
+  const auto csvPath = std::filesystem::path(DATATABLE_SOURCE_DIR) / "tests" / "test_data_sets" /
+                       "missing_col_in_row.csv";
+  ASSERT_TRUE(std::filesystem::exists(csvPath)) << csvPath;
+
+  DataTable dt(csvPath.string(), outDir.string());
+  EXPECT_THROW(dt.parse(1), std::runtime_error);
+}
+
+TEST(DataTable, Parse_ThrowsWhenRowHasMissingColumn_Threads2To5) {
+  const auto csvPath = std::filesystem::path(DATATABLE_SOURCE_DIR) / "tests" / "test_data_sets" /
+                       "missing_col_in_row.csv";
+  ASSERT_TRUE(std::filesystem::exists(csvPath)) << csvPath;
+
+  for (int threads = 2; threads <= 5; ++threads) {
+    const auto outDir = makeTempDir("missing_col_threads" + std::to_string(threads));
+    DataTable dt(csvPath.string(), outDir.string());
+    EXPECT_THROW(dt.parse(threads), std::runtime_error) << "threads=" << threads;
+  }
+}

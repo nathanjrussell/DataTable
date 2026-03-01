@@ -511,6 +511,7 @@ void DataTable::parse(int threads) {
 
   columnCount_ = ncols;
 
+  // Locate row offsets and validate per-row column counts in the same pass.
   locateRowOffsets(threads);
 
   parseCompleted_ = true;
@@ -518,10 +519,11 @@ void DataTable::parse(int threads) {
 
 void DataTable::locateRowOffsets(int /*threads*/) {
   // CSV-aware scan of the original CSV file.
-  // - Counts every byte exactly as stored (no trimming, no parsing of fields).
-  // - Tracks whether we're inside a quoted field, so embedded newlines inside quotes do NOT end a row.
-  // - Treats \n, \r\n, and \r as row delimiters only when not in quotes.
-  // - Row 0 is always the header row at offset 0.
+  // - Counts every byte exactly as stored.
+  // - Tracks whether we're inside a quoted field.
+  // - Treats newlines as row delimiters only when not in quotes.
+  // - Row 0 is header at offset 0.
+  // - Validates that every row has exactly columnCount_ columns by counting commas outside quotes.
 
   std::ifstream in(inputFilePath_, std::ios::binary);
   if (!in) throw std::runtime_error("Failed to open input CSV for row scan");
@@ -530,9 +532,29 @@ void DataTable::locateRowOffsets(int /*threads*/) {
   offsets.reserve(1024);
 
   std::uint64_t pos = 0;
-  offsets.push_back(0); // header row
+  offsets.push_back(0);
 
   bool inQuotes = false;
+
+  // Column validation state.
+  std::uint64_t rowNumber1Based = 1; // header is row 1
+  std::uint64_t commasThisRow = 0;
+  bool sawAnyByteThisRow = false;
+
+  auto validateAndResetRow = [&]() {
+    // Even an empty physical line represents one empty field.
+    const std::uint64_t colsThisRow = (sawAnyByteThisRow ? (commasThisRow + 1) : 1);
+    if (colsThisRow != columnCount_) {
+      throw std::runtime_error(
+          "Row has wrong number of columns. Expected " + std::to_string(columnCount_) +
+          ", got " + std::to_string(colsThisRow) +
+          " at row " + std::to_string(rowNumber1Based));
+    }
+
+    ++rowNumber1Based;
+    commasThisRow = 0;
+    sawAnyByteThisRow = false;
+  };
 
   while (true) {
     const int ci = in.get();
@@ -540,6 +562,7 @@ void DataTable::locateRowOffsets(int /*threads*/) {
 
     char c = static_cast<char>(ci);
     ++pos;
+    sawAnyByteThisRow = true;
 
     if (c == '"') {
       if (inQuotes) {
@@ -547,6 +570,7 @@ void DataTable::locateRowOffsets(int /*threads*/) {
         if (in.peek() == '"') {
           in.get();
           ++pos;
+          // still inside quotes
         } else {
           inQuotes = false;
         }
@@ -557,11 +581,15 @@ void DataTable::locateRowOffsets(int /*threads*/) {
     }
 
     if (!inQuotes) {
+      if (c == ',') {
+        ++commasThisRow;
+        continue;
+      }
+
       bool newline = false;
       if (c == '\n') {
         newline = true;
       } else if (c == '\r') {
-        // CRLF counts as two bytes.
         if (in.peek() == '\n') {
           in.get();
           ++pos;
@@ -570,11 +598,11 @@ void DataTable::locateRowOffsets(int /*threads*/) {
       }
 
       if (newline) {
-        offsets.push_back(pos);
+        validateAndResetRow();
+        offsets.push_back(pos); // start of next row
       }
     } else {
-      // In quotes: treat CRLF/CR as data; we still count bytes via pos. If we see CRLF, consume LF
-      // so pos remains correct.
+      // In quotes: CRLF should be consumed as two bytes for pos accuracy.
       if (c == '\r' && in.peek() == '\n') {
         in.get();
         ++pos;
@@ -582,10 +610,14 @@ void DataTable::locateRowOffsets(int /*threads*/) {
     }
   }
 
-  // If file ends with a newline, last offset can equal EOF; drop it.
+  // Handle EOF: if file ended with a newline, last offset points at EOF.
   const std::uint64_t fileSize = static_cast<std::uint64_t>(std::filesystem::file_size(inputFilePath_));
   if (!offsets.empty() && offsets.back() >= fileSize) {
     offsets.pop_back();
+    // last row already validated when newline was seen
+  } else if (fileSize > 0) {
+    // file ended without newline: validate final row now
+    validateAndResetRow();
   }
 
   rowCount_ = static_cast<std::uint64_t>(offsets.size());

@@ -1,10 +1,10 @@
 {
-  "tests": 9,
+  "tests": 11,
   "name": "AllTests",
   "testsuites": [
     {
       "name": "DataTable",
-      "tests": 9,
+      "tests": 11,
       "testsuite": [
         {
           "name": "ConstructorAndSetters_StorePaths",
@@ -45,6 +45,16 @@
           "name": "Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10",
           "file": "\/Users\/nathan\/github\/DataTable\/tests\/test_DataTable.cpp",
           "line": 206
+        },
+        {
+          "name": "Parse_ThrowsWhenRowHasMissingColumn_Threads1",
+          "file": "\/Users\/nathan\/github\/DataTable\/tests\/test_DataTable.cpp",
+          "line": 236
+        },
+        {
+          "name": "Parse_ThrowsWhenRowHasMissingColumn_Threads2To5",
+          "file": "\/Users\/nathan\/github\/DataTable\/tests\/test_DataTable.cpp",
+          "line": 247
         },
         {
           "name": "Parse_RowOffsets_FromPythonIndex_Threads1To10",

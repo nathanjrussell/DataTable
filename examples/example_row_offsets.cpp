@@ -11,7 +11,6 @@ int main() {
   // Update this path to point to your generated CSV if needed.
   const std::filesystem::path csvPath =
       std::filesystem::path("tests") / "test_data_sets" / "data_set_1.csv";
-
   // Output directory is only used for meta_data/.
   const std::filesystem::path outDir = std::filesystem::path("tests") / "test_data_sets" / "data_output" / "data_set_1_out";
 

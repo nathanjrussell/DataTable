@@ -1,10 +1,12 @@
-DataTable.ConstructorAndSetters_StorePaths 10 0.000526263
-DataTable.MetadataAccess_ThrowsBeforeParse 10 0.000460867
-DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack 10 0.000587304
-DataTable.Parse_PreservesWhitespaceInsideQuotes 10 0.000588596
-DataTable.Parse_HandlesEscapedQuotesInHeader 10 0.000553733
-DataTable.GetColumnHeader_OutOfRangeThrows 10 0.000531342
-DataTable.Parse_HeaderLongerThan255BytesThrows 10 0.00051805
-DataTable.Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10 8 0.0266873
-DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10 5 0.108496
+DataTable.ConstructorAndSetters_StorePaths 11 0.000434712
+DataTable.MetadataAccess_ThrowsBeforeParse 11 0.000426682
+DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack 11 0.000489678
+DataTable.Parse_PreservesWhitespaceInsideQuotes 11 0.000443788
+DataTable.Parse_HandlesEscapedQuotesInHeader 11 0.000419636
+DataTable.GetColumnHeader_OutOfRangeThrows 11 0.000459405
+DataTable.Parse_HeaderLongerThan255BytesThrows 11 0.000452276
+DataTable.Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10 9 0.0236023
+DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10 6 0.0897611
+DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads1 1 0.00419296
+DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads2To5 1 0.00479888
 ---

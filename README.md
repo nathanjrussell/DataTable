@@ -42,6 +42,31 @@ The ultimate goal for `DataTable` is to:
 3. Transpose the encoded data so downstream chi-square analysis can be performed columnwise.
 4. Support reverse mapping from integer ids back to the original strings so results can be reported in human-readable form.
 
+## Row offsets metadata (`meta_data/row_start_offsets.bin`)
+
+During `DataTable::parse()`, a metadata file is written at:
+
+- `outputDirectory/meta_data/row_start_offsets.bin`
+
+This file is a flat array of 64-bit unsigned integers (`uint64_t`) stored in native binary form.
+
+- The *i-th* 64-bit integer is the byte offset (from the start of the original CSV file) where CSV row *i* begins.
+- `row 0` is the header row, so the first entry is always `0`.
+- `row 1` is the first data row.
+
+These offsets are computed by scanning the CSV in binary mode and counting bytes exactly as stored in the file.
+Newlines are treated as row delimiters only when they occur **outside** double-quoted fields (RFC 4180 behavior),
+so embedded newlines inside quoted fields do not split rows.
+
+The public API reflects these semantics:
+
+- `getRowCount()` returns the number of rows for which offsets were recorded (including the header row).
+- `getRowOffset(row)` returns the byte offset for that row. If you `seekg()` to that offset in the original CSV,
+  the stream position will be at the first byte of the row.
+
+Row offsets are also used to validate input correctness during parsing: as each row boundary is found, the parser
+counts comma delimiters outside quotes and throws if any row does not have the same number of columns as the header.
+
 ## Build
 
 ```sh
