@@ -1,0 +1,27 @@
+{
+  "tests": 3,
+  "name": "AllTests",
+  "testsuites": [
+    {
+      "name": "DataTable",
+      "tests": 3,
+      "testsuite": [
+        {
+          "name": "DefaultConstructor_StoresEmptyPaths",
+          "file": "\/Users\/nathan\/github\/DataTable\/tests\/test_DataTable.cpp",
+          "line": 7
+        },
+        {
+          "name": "Constructor_SetsPaths",
+          "file": "\/Users\/nathan\/github\/DataTable\/tests\/test_DataTable.cpp",
+          "line": 13
+        },
+        {
+          "name": "Setters_UpdatePaths",
+          "file": "\/Users\/nathan\/github\/DataTable\/tests\/test_DataTable.cpp",
+          "line": 19
+        }
+      ]
+    }
+  ]
+}

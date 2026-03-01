@@ -1,0 +1,7 @@
+add_test([=[DataTable.DefaultConstructor_StoresEmptyPaths]=]  /Users/nathan/github/DataTable/build/tests/DataTableTests [==[--gtest_filter=DataTable.DefaultConstructor_StoresEmptyPaths]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[DataTable.DefaultConstructor_StoresEmptyPaths]=]  PROPERTIES DEF_SOURCE_LINE /Users/nathan/github/DataTable/tests/test_DataTable.cpp:7 WORKING_DIRECTORY /Users/nathan/github/DataTable/build/tests SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test([=[DataTable.Constructor_SetsPaths]=]  /Users/nathan/github/DataTable/build/tests/DataTableTests [==[--gtest_filter=DataTable.Constructor_SetsPaths]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[DataTable.Constructor_SetsPaths]=]  PROPERTIES DEF_SOURCE_LINE /Users/nathan/github/DataTable/tests/test_DataTable.cpp:13 WORKING_DIRECTORY /Users/nathan/github/DataTable/build/tests SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test([=[DataTable.Setters_UpdatePaths]=]  /Users/nathan/github/DataTable/build/tests/DataTableTests [==[--gtest_filter=DataTable.Setters_UpdatePaths]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[DataTable.Setters_UpdatePaths]=]  PROPERTIES DEF_SOURCE_LINE /Users/nathan/github/DataTable/tests/test_DataTable.cpp:19 WORKING_DIRECTORY /Users/nathan/github/DataTable/build/tests SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set(  DataTableTests_TESTS DataTable.DefaultConstructor_StoresEmptyPaths DataTable.Constructor_SetsPaths DataTable.Setters_UpdatePaths)

@@ -1,0 +1,4 @@
+DataTable.DefaultConstructor_StoresEmptyPaths 1 0.00309671
+DataTable.Constructor_SetsPaths 1 0.00268012
+DataTable.Setters_UpdatePaths 1 0.00285021
+---

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libDataTable.a CMakeFiles/DataTable.dir/src/DataTable.cpp.o
+/usr/bin/ranlib libDataTable.a
