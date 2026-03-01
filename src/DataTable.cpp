@@ -11,6 +11,7 @@
 #include <thread>
 #include <utility>
 #include <vector>
+#include <sstream>
 
 #include <nlohmann/json.hpp>
 
@@ -173,7 +174,103 @@ std::filesystem::path headerRowBinPath(const std::string& outputDirectory) {
   return std::filesystem::path(outputDirectory) / "meta_data" / "header_row.bin";
 }
 
-}  // namespace
+std::filesystem::path rowOffsetsBinPath(const std::string& outputDirectory) {
+  return std::filesystem::path(outputDirectory) / "meta_data" / "row_start_offsets.bin";
+}
+
+std::filesystem::path mappedDataDirPath(const std::string& outputDirectory) {
+  return std::filesystem::path(outputDirectory) / "mapped_data";
+}
+
+// Store per-chunk bit widths in meta_data/ (1 byte per chunk).
+std::filesystem::path columnChunkWidthPath(const std::string& outputDirectory) {
+  return std::filesystem::path(outputDirectory) / "meta_data" / "column_chunk_width.bin";
+}
+
+std::filesystem::path columnChunkBinPath(const std::string& outputDirectory,
+                                         std::uint64_t firstCol,
+                                         std::uint64_t lastCol) {
+  std::ostringstream name;
+  name << "column_chunk_" << firstCol << "_" << lastCol << ".bin";
+  return mappedDataDirPath(outputDirectory) / name.str();
+}
+
+std::uint32_t readBitsAt(std::ifstream& in, std::uint64_t bitOffset, std::uint8_t bitWidth) {
+  const std::uint64_t byteOffset = bitOffset / 8;
+  const std::uint32_t bitInByte = static_cast<std::uint32_t>(bitOffset % 8);
+
+  const std::uint32_t totalBits = bitInByte + bitWidth;
+  const std::uint32_t bytesToRead = (totalBits + 7) / 8; // <= 5 for bitWidth<=32
+
+  std::uint8_t buf[8] = {0};
+  in.clear();
+  in.seekg(static_cast<std::streamoff>(byteOffset), std::ios::beg);
+  if (!in) throw std::runtime_error("Failed seeking mapped_data chunk file");
+
+  in.read(reinterpret_cast<char*>(buf), static_cast<std::streamsize>(bytesToRead));
+  if (!in) throw std::runtime_error("Failed reading mapped_data chunk file");
+
+  std::uint64_t acc = 0;
+  for (std::uint32_t i = 0; i < bytesToRead; ++i) {
+    acc |= (static_cast<std::uint64_t>(buf[i]) << (8U * i));
+  }
+
+  acc >>= bitInByte;
+
+  const std::uint64_t mask = (bitWidth == 64) ? ~0ULL : ((1ULL << bitWidth) - 1ULL);
+  return static_cast<std::uint32_t>(acc & mask);
+}
+
+} // namespace
+
+namespace {
+
+class BitWriter {
+public:
+  explicit BitWriter(const std::filesystem::path& path)
+      : out_(path, std::ios::binary | std::ios::trunc) {
+    if (!out_) throw std::runtime_error("Failed to open output file: " + path.string());
+  }
+
+  void write(std::uint32_t value, std::uint8_t bitWidth) {
+    if (bitWidth == 0 || bitWidth > 32) {
+      throw std::runtime_error("Invalid bitWidth");
+    }
+
+    const std::uint64_t mask = (bitWidth == 32) ? 0xFFFFFFFFULL : ((1ULL << bitWidth) - 1ULL);
+    std::uint64_t v = static_cast<std::uint64_t>(value) & mask;
+
+    for (std::uint8_t i = 0; i < bitWidth; ++i) {
+      const std::uint8_t bit = static_cast<std::uint8_t>((v >> i) & 1ULL);
+      currentByte_ |= static_cast<std::uint8_t>(bit << bitPos_);
+      ++bitPos_;
+      if (bitPos_ == 8) {
+        out_.put(static_cast<char>(currentByte_));
+        if (!out_) throw std::runtime_error("Failed writing output file");
+        currentByte_ = 0;
+        bitPos_ = 0;
+      }
+    }
+  }
+
+  void flush() {
+    if (bitPos_ != 0) {
+      out_.put(static_cast<char>(currentByte_));
+      if (!out_) throw std::runtime_error("Failed writing output file");
+      currentByte_ = 0;
+      bitPos_ = 0;
+    }
+    out_.flush();
+    if (!out_) throw std::runtime_error("Failed flushing output file");
+  }
+
+private:
+  std::ofstream out_;
+  std::uint8_t currentByte_ = 0;
+  std::uint8_t bitPos_ = 0;
+};
+
+} // namespace
 
 DataTable::DataTable(std::string inputFilePath, std::string outputDirectory)
     : inputFilePath_(std::move(inputFilePath)),
@@ -185,6 +282,7 @@ void DataTable::setInputFilePath(const std::string& inputFilePath) {
   columnCount_ = 0;
   rowCount_ = 0;
   rowOffsets_.reset();
+  currentRowOffsets_.reset();
 }
 
 void DataTable::setOutputDirectory(const std::string& outputDirectory) {
@@ -193,6 +291,7 @@ void DataTable::setOutputDirectory(const std::string& outputDirectory) {
   columnCount_ = 0;
   rowCount_ = 0;
   rowOffsets_.reset();
+  currentRowOffsets_.reset();
 }
 
 const std::string& DataTable::inputFilePath() const noexcept {
@@ -256,11 +355,9 @@ std::string DataTable::getColumnHeaderJson() const {
   return j.dump();
 }
 
-namespace {
-
 // Parses a data row starting at the stream's current position and returns the column count.
 // Stops after consuming the row delimiter (or EOF). This is used to validate column counts.
-std::uint64_t parseRowAndCountColumns(std::istream& in) {
+static std::uint64_t parseRowAndCountColumns(std::istream& in) {
   std::uint64_t cols = 0;
   bool inQuotes = false;
   bool afterClosingQuote = false;
@@ -353,168 +450,6 @@ std::uint64_t parseRowAndCountColumns(std::istream& in) {
   }
 
   return cols;
-}
-
-std::filesystem::path rowOffsetsBinPath(const std::string& outputDirectory) {
-  return std::filesystem::path(outputDirectory) / "meta_data" / "row_start_offsets.bin";
-}
-
-class Barrier {
-public:
-  explicit Barrier(std::size_t count) : count_(count), initial_(count) {}
-
-  void arrive_and_wait() {
-    std::unique_lock<std::mutex> lk(m_);
-    if (--count_ == 0) {
-      count_ = initial_;
-      ++generation_;
-      cv_.notify_all();
-      return;
-    }
-    const std::size_t gen = generation_;
-    cv_.wait(lk, [&] { return gen != generation_; });
-  }
-
-private:
-  std::mutex m_;
-  std::condition_variable cv_;
-  std::size_t count_;
-  const std::size_t initial_;
-  std::size_t generation_ = 0;
-};
-
-// From a given offset, scan forward to the next row start (the byte after an unescaped newline).
-// To determine quote-state correctly, we first back up to the previous physical newline and scan forward.
-std::uint64_t findNextRowStart(const std::string& filePath, std::uint64_t startOffset) {
-  std::ifstream in(filePath, std::ios::binary);
-  if (!in) throw std::runtime_error("Failed to open input CSV during row scan: " + filePath);
-
-  const std::uint64_t fileSize = static_cast<std::uint64_t>(std::filesystem::file_size(filePath));
-  if (startOffset > fileSize) startOffset = fileSize;
-
-  // Seek backwards to a likely record boundary so quote-state can be reconstructed.
-  // We search for a '\n' or '\r' before startOffset.
-  std::uint64_t scanStart = 0;
-  if (startOffset > 0) {
-    const std::uint64_t maxBack = 1024 * 1024; // 1MiB safety window
-    const std::uint64_t begin = (startOffset > maxBack) ? (startOffset - maxBack) : 0;
-    const std::size_t window = static_cast<std::size_t>(startOffset - begin);
-
-    std::vector<char> buf(window);
-    in.seekg(static_cast<std::streamoff>(begin), std::ios::beg);
-    in.read(buf.data(), static_cast<std::streamsize>(window));
-
-    // Find last newline char in the buffer.
-    for (std::size_t i = window; i-- > 0;) {
-      if (buf[i] == '\n' || buf[i] == '\r') {
-        scanStart = begin + static_cast<std::uint64_t>(i + 1);
-        break;
-      }
-    }
-  }
-
-  // Now scan forward from scanStart, tracking quote state, until we pass startOffset and see
-  // the next unescaped newline.
-  in.clear();
-  in.seekg(static_cast<std::streamoff>(scanStart), std::ios::beg);
-  if (!in) throw std::runtime_error("Failed to seek input CSV during row scan");
-
-  bool inQuotes = false;
-  while (true) {
-    const std::uint64_t pos = static_cast<std::uint64_t>(in.tellg());
-    const int ci = in.get();
-    if (ci == EOF) return pos;
-
-    char c = static_cast<char>(ci);
-
-    if (inQuotes) {
-      if (c == '"') {
-        if (in.peek() == '"') {
-          in.get();
-        } else {
-          inQuotes = false;
-        }
-      }
-      continue;
-    }
-
-    if (c == '"') {
-      inQuotes = true;
-      continue;
-    }
-
-    // Only treat newline as row delimiter if we're not in quotes.
-    if (c == '\r') {
-      if (in.peek() == '\n') in.get();
-      const std::uint64_t candidate = static_cast<std::uint64_t>(in.tellg());
-      if (candidate >= startOffset) return candidate;
-      continue;
-    }
-    if (c == '\n') {
-      const std::uint64_t candidate = static_cast<std::uint64_t>(in.tellg());
-      if (candidate >= startOffset) return candidate;
-      continue;
-    }
-  }
-}
-
-} // namespace
-
-void DataTable::parse(int threads) {
-  parseCompleted_ = false;
-  columnCount_ = 0;
-  rowCount_ = 0;
-  rowOffsets_.reset();
-
-  if (threads <= 0) {
-    throw std::runtime_error("threads must be >= 1");
-  }
-
-  if (inputFilePath_.empty()) {
-    throw std::runtime_error("Input file path is empty");
-  }
-  if (outputDirectory_.empty()) {
-    throw std::runtime_error("Output directory is empty");
-  }
-
-  std::ifstream in(inputFilePath_, std::ios::binary);
-  if (!in) {
-    throw std::runtime_error("Failed to open input CSV: " + inputFilePath_);
-  }
-
-  const std::vector<std::string> headers = parseHeaderRow(in);
-  const std::uint64_t ncols = static_cast<std::uint64_t>(headers.size());
-
-  const std::filesystem::path metaDir = std::filesystem::path(outputDirectory_) / "meta_data";
-  std::filesystem::create_directories(metaDir);
-
-  const std::filesystem::path headerPath = metaDir / "header_row.bin";
-  {
-    std::ofstream out(headerPath, std::ios::binary | std::ios::trunc);
-    if (!out) {
-      throw std::runtime_error("Failed to open header output file: " + headerPath.string());
-    }
-
-    writeU64(out, ncols);
-
-    for (const auto& h : headers) {
-      if (h.size() > 255) {
-        throw std::runtime_error("Column header exceeds 255 bytes after trimming: '" + h + "'");
-      }
-      writeU8(out, static_cast<std::uint8_t>(h.size()));
-      if (!h.empty()) {
-        out.write(h.data(), static_cast<std::streamsize>(h.size()));
-        if (!out) throw std::runtime_error("Failed writing header bytes");
-      }
-    }
-  }
-
-  columnCount_ = ncols;
-
-  // Locate row offsets and validate per-row column counts in the same pass.
-  locateRowOffsets(threads);
-
-  parseCompleted_ = true;
 }
 
 void DataTable::locateRowOffsets(int /*threads*/) {
@@ -645,6 +580,366 @@ std::uint64_t DataTable::getRowOffset(int row) const {
   if (row < 0) throw std::out_of_range("row must be >= 0");
   if (static_cast<std::uint64_t>(row) >= rowCount_) throw std::out_of_range("row out of range");
   return rowOffsets_[static_cast<std::size_t>(row)];
+}
+
+void DataTable::parse(int threads) {
+  parse(threads, chunkSize_);
+}
+
+void DataTable::parse(int threads, std::uint32_t chunkSize) {
+  parseCompleted_ = false;
+  columnCount_ = 0;
+  rowCount_ = 0;
+  rowOffsets_.reset();
+  currentRowOffsets_.reset();
+
+  if (threads <= 0) {
+    throw std::runtime_error("threads must be >= 1");
+  }
+  if (chunkSize == 0) {
+    throw std::runtime_error("chunkSize must be >= 1");
+  }
+  chunkSize_ = chunkSize;
+
+  if (inputFilePath_.empty()) {
+    throw std::runtime_error("Input file path is empty");
+  }
+  if (outputDirectory_.empty()) {
+    throw std::runtime_error("Output directory is empty");
+  }
+
+  std::ifstream in(inputFilePath_, std::ios::binary);
+  if (!in) {
+    throw std::runtime_error("Failed to open input CSV: " + inputFilePath_);
+  }
+
+  const std::vector<std::string> headers = parseHeaderRow(in);
+  const std::uint64_t ncols = static_cast<std::uint64_t>(headers.size());
+
+  const std::filesystem::path metaDir = std::filesystem::path(outputDirectory_) / "meta_data";
+  std::filesystem::create_directories(metaDir);
+
+  const std::filesystem::path headerPath = metaDir / "header_row.bin";
+  {
+    std::ofstream out(headerPath, std::ios::binary | std::ios::trunc);
+    if (!out) {
+      throw std::runtime_error("Failed to open header output file: " + headerPath.string());
+    }
+
+    writeU64(out, ncols);
+
+    for (const auto& h : headers) {
+      if (h.size() > 255) {
+        throw std::runtime_error("Column header exceeds 255 bytes after trimming: '" + h + "'");
+      }
+      writeU8(out, static_cast<std::uint8_t>(h.size()));
+      if (!h.empty()) {
+        out.write(h.data(), static_cast<std::streamsize>(h.size()));
+        if (!out) throw std::runtime_error("Failed writing header bytes");
+      }
+    }
+  }
+
+  columnCount_ = ncols;
+
+  // Locate row offsets and validate per-row column counts in the same pass.
+  locateRowOffsets(threads);
+
+  // Initialize per-row cursors for chunk parsing.
+  currentRowOffsets_ = std::make_unique<std::uint64_t[]>(static_cast<std::size_t>(rowCount_));
+  for (std::uint64_t r = 0; r < rowCount_; ++r) {
+    currentRowOffsets_[static_cast<std::size_t>(r)] = rowOffsets_[static_cast<std::size_t>(r)];
+  }
+
+  // Prepare mapped_data outputs.
+  std::filesystem::create_directories(mappedDataDirPath(outputDirectory_));
+  {
+    // Overwrite widths file in meta_data/; parseChunks() will append 1 byte per chunk.
+    std::ofstream widths(columnChunkWidthPath(outputDirectory_), std::ios::binary | std::ios::trunc);
+    if (!widths) throw std::runtime_error("Failed to create meta_data/column_chunk_width.bin");
+  }
+
+  // Chunk parsing and mapped output.
+  parseChunks(threads);
+
+  parseCompleted_ = true;
+}
+
+namespace {
+
+static std::string normalizeFieldToKey(const std::string& raw, bool wasQuoted) {
+  if (wasQuoted) {
+    // Quoted fields preserve whitespace.
+    // Treat quoted empty and quoted whitespace-only as empty.
+    bool anyNonSpace = false;
+    for (unsigned char ch : raw) {
+      if (std::isspace(ch) == 0) {
+        anyNonSpace = true;
+        break;
+      }
+    }
+    return anyNonSpace ? raw : std::string();
+  }
+
+  // Unquoted fields are trimmed.
+  std::string t = trimAsciiWhitespace(raw);
+  return t;
+}
+
+struct FieldToken {
+  std::string key;   // normalized key used for mapping ("" means empty)
+  bool isEmpty = true;
+};
+
+// Parse a single CSV field starting at the current stream position.
+// Assumes the stream is positioned at the start of a field (not on a delimiter).
+// Consumes up to (but not including) the delimiter/newline/EOF.
+static FieldToken readOneField(std::istream& in, char& delimOut) {
+  std::string raw;
+  raw.reserve(64);
+
+  bool inQuotes = false;
+  bool wasQuoted = false;
+  bool afterClosingQuote = false;
+
+  // Skip leading whitespace before a field (for unquoted trimming behavior).
+  // But if the field is quoted and preceded by whitespace, that's allowed and the whitespace is ignored.
+  while (true) {
+    int ci = in.peek();
+    if (ci == EOF) {
+      delimOut = '\0';
+      return FieldToken{std::string(), true};
+    }
+    char c = static_cast<char>(ci);
+    if (c == ' ' || c == '\t') {
+      in.get();
+      continue;
+    }
+    break;
+  }
+
+  // Quoted field?
+  if (in.peek() == '"') {
+    in.get();
+    inQuotes = true;
+    wasQuoted = true;
+  }
+
+  while (true) {
+    const int ci = in.get();
+    if (ci == EOF) {
+      delimOut = '\0';
+      break;
+    }
+
+    char c = static_cast<char>(ci);
+
+    if (inQuotes) {
+      if (c == '"') {
+        if (in.peek() == '"') {
+          in.get();
+          raw.push_back('"');
+        } else {
+          inQuotes = false;
+          afterClosingQuote = true;
+        }
+        continue;
+      }
+
+      // Keep newlines as actual newlines in the raw key.
+      if (c == '\r') {
+        if (in.peek() == '\n') in.get();
+        c = '\n';
+      }
+      raw.push_back(c);
+      continue;
+    }
+
+    // Not in quotes.
+    if (afterClosingQuote) {
+      // Ignore whitespace after closing quote until delimiter/newline.
+      if (std::isspace(static_cast<unsigned char>(c)) != 0) {
+        continue;
+      }
+      afterClosingQuote = false;
+    }
+
+    if (c == ',') {
+      delimOut = ',';
+      break;
+    }
+
+    if (c == '\n') {
+      delimOut = '\n';
+      break;
+    }
+
+    if (c == '\r') {
+      if (in.peek() == '\n') in.get();
+      delimOut = '\n';
+      break;
+    }
+
+    raw.push_back(c);
+  }
+
+  std::string key = normalizeFieldToKey(raw, wasQuoted);
+  const bool isEmpty = key.empty();
+  return FieldToken{std::move(key), isEmpty};
+}
+
+static std::uint8_t bitsRequired(std::uint32_t maxValue) {
+  // Need at least 1 bit to represent 0.
+  std::uint8_t bits = 1;
+  while ((maxValue >> bits) != 0 && bits < 32) {
+    ++bits;
+  }
+  return bits;
+}
+
+} // namespace
+
+void DataTable::parseChunks(int /*threads*/) {
+  if (columnCount_ == 0) throw std::runtime_error("Column count is 0");
+  if (rowCount_ < 2) throw std::runtime_error("No data rows present");
+  if (chunkSize_ == 0) throw std::runtime_error("chunkSize is 0");
+
+  const std::uint64_t dataRowCount = rowCount_ - 1; // exclude header row
+
+  const std::uint64_t totalChunks =
+      (columnCount_ + static_cast<std::uint64_t>(chunkSize_) - 1) /
+      static_cast<std::uint64_t>(chunkSize_);
+
+  std::ofstream widthOut(columnChunkWidthPath(outputDirectory_), std::ios::binary | std::ios::trunc);
+  if (!widthOut) throw std::runtime_error("Failed to open meta_data/column_chunk_width.bin");
+
+  // We'll read from the original CSV using rowOffsets_ to avoid scanning from the beginning repeatedly.
+  // Current implementation treats row 0 as header and ignores it for mapped output.
+
+  for (std::uint64_t chunkIndex = 0; chunkIndex < totalChunks; ++chunkIndex) {
+    const std::uint64_t firstCol = chunkIndex * static_cast<std::uint64_t>(chunkSize_);
+    const std::uint64_t lastCol =
+        std::min(firstCol + static_cast<std::uint64_t>(chunkSize_) - 1, columnCount_ - 1);
+    const std::uint64_t chunkCols = lastCol - firstCol + 1;
+
+    // Per-column map for this chunk. Key->id where id 0 is reserved for empty.
+    std::vector<std::unordered_map<std::string, std::uint32_t>> maps;
+    maps.resize(static_cast<std::size_t>(chunkCols));
+
+    // For writing transposed, we need per-column sequences.
+    // For now (small datasets), store the chunk's mapped ids for all rows in memory.
+    // TODO: for huge datasets, spill per-column streams to temp files. We'll implement that later.
+    std::vector<std::vector<std::uint32_t>> colValues;
+    colValues.resize(static_cast<std::size_t>(chunkCols));
+    for (auto& v : colValues) v.resize(static_cast<std::size_t>(dataRowCount));
+
+    std::uint32_t maxIdThisChunk = 0;
+
+    // Parse rows.
+    for (std::uint64_t dataRow = 0; dataRow < dataRowCount; ++dataRow) {
+      const std::uint64_t csvRow = dataRow + 1; // shift because row 0 is header
+      const std::uint64_t rowStart = rowOffsets_[static_cast<std::size_t>(csvRow)];
+
+      std::ifstream in(inputFilePath_, std::ios::binary);
+      if (!in) throw std::runtime_error("Failed to open input CSV during chunk parse");
+      in.seekg(static_cast<std::streamoff>(rowStart), std::ios::beg);
+      if (!in) throw std::runtime_error("Failed seeking input CSV during chunk parse");
+
+      // Skip fields before firstCol.
+      char delim = 0;
+      for (std::uint64_t c = 0; c < firstCol; ++c) {
+        (void)readOneField(in, delim);
+        if (delim == '\0' || delim == '\n') {
+          throw std::runtime_error("Unexpected end of row while skipping columns");
+        }
+      }
+
+      // Read chunk fields.
+      for (std::uint64_t localCol = 0; localCol < chunkCols; ++localCol) {
+        FieldToken tok = readOneField(in, delim);
+
+        std::uint32_t id = 0;
+        if (!tok.isEmpty) {
+          auto& m = maps[static_cast<std::size_t>(localCol)];
+          auto it = m.find(tok.key);
+          if (it == m.end()) {
+            const std::uint32_t nextId = static_cast<std::uint32_t>(m.size() + 1); // 0 reserved
+            it = m.emplace(tok.key, nextId).first;
+            if (nextId > maxIdThisChunk) maxIdThisChunk = nextId;
+          }
+          id = it->second;
+        }
+
+        colValues[static_cast<std::size_t>(localCol)][static_cast<std::size_t>(dataRow)] = id;
+
+        if (localCol + 1 < chunkCols) {
+          if (delim != ',') {
+            throw std::runtime_error("Row ended early while reading chunk columns");
+          }
+        }
+      }
+
+      // After reading chunkCols fields, if there are more columns overall, we don't consume them now.
+      // Row-level validation of total column count is done earlier during locateRowOffsets().
+    }
+
+    const std::uint8_t bitWidth = bitsRequired(maxIdThisChunk);
+    widthOut.write(reinterpret_cast<const char*>(&bitWidth), 1);
+    if (!widthOut) throw std::runtime_error("Failed writing chunk bit width");
+
+    BitWriter bw(columnChunkBinPath(outputDirectory_, firstCol, lastCol));
+
+    // Transposed output: for each column in chunk, write all data rows.
+    for (std::uint64_t localCol = 0; localCol < chunkCols; ++localCol) {
+      const auto& vals = colValues[static_cast<std::size_t>(localCol)];
+      for (std::uint64_t dataRow = 0; dataRow < dataRowCount; ++dataRow) {
+        bw.write(vals[static_cast<std::size_t>(dataRow)], bitWidth);
+      }
+    }
+
+    bw.flush();
+  }
+
+  widthOut.flush();
+  if (!widthOut) throw std::runtime_error("Failed flushing meta_data/column_chunk_width.bin");
+}
+
+std::uint32_t DataTable::lookupMap(std::uint64_t row, std::uint64_t col) const {
+  ensureParsed();
+
+  if (row >= rowCount_) throw std::out_of_range("row out of range");
+  if (col >= columnCount_) throw std::out_of_range("col out of range");
+  if (row == 0) throw std::runtime_error("lookupMap() is not supported for header row");
+
+  const std::uint64_t dataRowIndex = row - 1;
+  const std::uint64_t dataRowCount = rowCount_ - 1;
+
+  const std::uint64_t chunkIndex = col / static_cast<std::uint64_t>(chunkSize_);
+  const std::uint64_t firstCol = chunkIndex * static_cast<std::uint64_t>(chunkSize_);
+  const std::uint64_t lastCol =
+      std::min(firstCol + static_cast<std::uint64_t>(chunkSize_) - 1, columnCount_ - 1);
+  const std::uint64_t localCol = col - firstCol;
+
+  std::ifstream widthIn(columnChunkWidthPath(outputDirectory_), std::ios::binary);
+  if (!widthIn) throw std::runtime_error("Failed to open meta_data/column_chunk_width.bin");
+
+  widthIn.seekg(static_cast<std::streamoff>(chunkIndex), std::ios::beg);
+  if (!widthIn) throw std::runtime_error("Failed seeking mapped_data/column_chunk_width.bin");
+
+  std::uint8_t bitWidth = 0;
+  widthIn.read(reinterpret_cast<char*>(&bitWidth), 1);
+  if (!widthIn) throw std::runtime_error("Failed reading chunk bit width");
+  if (bitWidth == 0 || bitWidth > 32) throw std::runtime_error("Invalid chunk bit width");
+
+  // Transposed layout: for each column in the chunk, store all data rows sequentially.
+  // idx = localCol * dataRowCount + dataRowIndex
+  const std::uint64_t idx = localCol * dataRowCount + dataRowIndex;
+  const std::uint64_t bitOffset = idx * static_cast<std::uint64_t>(bitWidth);
+
+  std::ifstream in(columnChunkBinPath(outputDirectory_, firstCol, lastCol), std::ios::binary);
+  if (!in) throw std::runtime_error("Failed to open mapped_data chunk file");
+
+  return readBitsAt(in, bitOffset, bitWidth);
 }
 
 }  // namespace DataTableLib

@@ -35,6 +35,8 @@ int main() {
         std::cout << "Column " << col << " header: " << dt.getColumnHeader(col) << "\n";
     }
 
+    std::cout << "Lookup map for row 11, col 3: " << dt.lookupMap(11, 3) << "\n";
+
 
 
   return 0;

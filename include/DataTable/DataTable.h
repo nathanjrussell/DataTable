@@ -21,6 +21,9 @@ public:
   // After this completes successfully, parseCompleted() becomes true and metadata getters are enabled.
   void parse(int threads = 1);
 
+  // Overload that sets/overrides the column chunk size (number of columns processed per iteration).
+  void parse(int threads, std::uint32_t chunkSize);
+
   // No method below is valid unless parse() has completed successfully.
   std::uint64_t getColumnCount() const;
   std::string getColumnHeader(int col) const;
@@ -32,11 +35,16 @@ public:
   std::uint64_t getRowCount() const;
   std::uint64_t getRowOffset(int row) const;
 
+  // Return the mapped integer id for a given cell by reading the persisted, bit-packed mapped_data.
+  // Row 0 is the header and is not supported.
+  std::uint32_t lookupMap(std::uint64_t row, std::uint64_t col) const;
+
   bool parseCompleted() const noexcept { return parseCompleted_; }
 
 private:
   void ensureParsed() const;
   void locateRowOffsets(int threads);
+  void parseChunks(int threads);
 
   std::string inputFilePath_;
   std::string outputDirectory_;
@@ -46,6 +54,12 @@ private:
 
   std::uint64_t rowCount_ = 0;
   std::unique_ptr<std::uint64_t[]> rowOffsets_;
+
+  // Per-row cursor used during chunked parsing.
+  std::unique_ptr<std::uint64_t[]> currentRowOffsets_;
+
+  // Default number of columns per chunk.
+  std::uint32_t chunkSize_ = 1000;
 };
 
 } // namespace DataTableLib
