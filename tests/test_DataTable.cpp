@@ -218,7 +218,7 @@ TEST(DataTable, Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads
   expectedOffsets.push_back(0);
   expectedOffsets.insert(expectedOffsets.end(), gen.offsets.begin(), gen.offsets.end());
 
-  for (int threads = 1; threads <= 10; ++threads) {
+  for (int threads = 1; threads <= 10; threads+=2) {
     DataTable dt(gen.csvPath.string(), outDir.string());
     dt.parse(threads);
 

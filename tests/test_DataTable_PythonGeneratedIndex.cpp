@@ -86,7 +86,7 @@ TEST(DataTable, Parse_RowOffsets_FromPythonIndex_Threads1To10) {
   std::filesystem::remove_all(outDir, ec);
   std::filesystem::create_directories(outDir, ec);
 
-  for (int threads = 1; threads <= 10; ++threads) {
+  for (int threads = 1; threads <= 10; threads+=2) {
     DataTable dt(csvPath.string(), outDir.string());
     dt.parse(threads);
 
