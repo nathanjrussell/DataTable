@@ -1,5 +1,0 @@
-if(EXISTS "/Users/nathan/github/DataTable/build/tests/DataTableTests[1]_tests.cmake")
-  include("/Users/nathan/github/DataTable/build/tests/DataTableTests[1]_tests.cmake")
-else()
-  add_test(DataTableTests_NOT_BUILT DataTableTests_NOT_BUILT)
-endif()
