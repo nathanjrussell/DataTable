@@ -233,6 +233,30 @@ test_DataTable_PythonGeneratedIndex.cpp.s:
 	cd /Users/nathan/github/DataTable/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/DataTableTests.dir/build.make tests/CMakeFiles/DataTableTests.dir/test_DataTable_PythonGeneratedIndex.cpp.s
 .PHONY : test_DataTable_PythonGeneratedIndex.cpp.s
 
+test_get_value_data_set_1.o: test_get_value_data_set_1.cpp.o
+.PHONY : test_get_value_data_set_1.o
+
+# target to build an object file
+test_get_value_data_set_1.cpp.o:
+	cd /Users/nathan/github/DataTable/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/DataTableTests.dir/build.make tests/CMakeFiles/DataTableTests.dir/test_get_value_data_set_1.cpp.o
+.PHONY : test_get_value_data_set_1.cpp.o
+
+test_get_value_data_set_1.i: test_get_value_data_set_1.cpp.i
+.PHONY : test_get_value_data_set_1.i
+
+# target to preprocess a source file
+test_get_value_data_set_1.cpp.i:
+	cd /Users/nathan/github/DataTable/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/DataTableTests.dir/build.make tests/CMakeFiles/DataTableTests.dir/test_get_value_data_set_1.cpp.i
+.PHONY : test_get_value_data_set_1.cpp.i
+
+test_get_value_data_set_1.s: test_get_value_data_set_1.cpp.s
+.PHONY : test_get_value_data_set_1.s
+
+# target to generate assembly for a file
+test_get_value_data_set_1.cpp.s:
+	cd /Users/nathan/github/DataTable/build && $(MAKE) $(MAKESILENT) -f tests/CMakeFiles/DataTableTests.dir/build.make tests/CMakeFiles/DataTableTests.dir/test_get_value_data_set_1.cpp.s
+.PHONY : test_get_value_data_set_1.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -253,6 +277,9 @@ help:
 	@echo "... test_DataTable_PythonGeneratedIndex.o"
 	@echo "... test_DataTable_PythonGeneratedIndex.i"
 	@echo "... test_DataTable_PythonGeneratedIndex.s"
+	@echo "... test_get_value_data_set_1.o"
+	@echo "... test_get_value_data_set_1.i"
+	@echo "... test_get_value_data_set_1.s"
 .PHONY : help
 
 

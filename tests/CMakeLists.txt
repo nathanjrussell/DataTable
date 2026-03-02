@@ -14,6 +14,7 @@ FetchContent_MakeAvailable(googletest)
 add_executable(DataTableTests
   test_DataTable.cpp
   test_DataTable_PythonGeneratedIndex.cpp
+        test_get_value_data_set_1.cpp
 )
 
 target_link_libraries(DataTableTests

@@ -234,7 +234,7 @@ CMakeFiles/DataTable.dir/clean:
 CMakeFiles/example_row_offsets.dir/all: CMakeFiles/DataTable.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/example_row_offsets.dir/build.make CMakeFiles/example_row_offsets.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/example_row_offsets.dir/build.make CMakeFiles/example_row_offsets.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=6,7 "Built target example_row_offsets"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=7,8 "Built target example_row_offsets"
 .PHONY : CMakeFiles/example_row_offsets.dir/all
 
 # Build rule for subdir invocation for target.
@@ -251,7 +251,7 @@ example_row_offsets: CMakeFiles/example_row_offsets.dir/rule
 # codegen rule for target.
 CMakeFiles/example_row_offsets.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/example_row_offsets.dir/build.make CMakeFiles/example_row_offsets.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=6,7 "Finished codegen for target example_row_offsets"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=7,8 "Finished codegen for target example_row_offsets"
 .PHONY : CMakeFiles/example_row_offsets.dir/codegen
 
 # clean rule for target.
@@ -268,12 +268,12 @@ tests/CMakeFiles/DataTableTests.dir/all: _deps/googletest-build/googletest/CMake
 tests/CMakeFiles/DataTableTests.dir/all: _deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/all
 	$(MAKE) $(MAKESILENT) -f tests/CMakeFiles/DataTableTests.dir/build.make tests/CMakeFiles/DataTableTests.dir/depend
 	$(MAKE) $(MAKESILENT) -f tests/CMakeFiles/DataTableTests.dir/build.make tests/CMakeFiles/DataTableTests.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=3,4,5 "Built target DataTableTests"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=3,4,5,6 "Built target DataTableTests"
 .PHONY : tests/CMakeFiles/DataTableTests.dir/all
 
 # Build rule for subdir invocation for target.
 tests/CMakeFiles/DataTableTests.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/nathan/github/DataTable/build/CMakeFiles 9
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/nathan/github/DataTable/build/CMakeFiles 10
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/CMakeFiles/DataTableTests.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /Users/nathan/github/DataTable/build/CMakeFiles 0
 .PHONY : tests/CMakeFiles/DataTableTests.dir/rule
@@ -285,7 +285,7 @@ DataTableTests: tests/CMakeFiles/DataTableTests.dir/rule
 # codegen rule for target.
 tests/CMakeFiles/DataTableTests.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f tests/CMakeFiles/DataTableTests.dir/build.make tests/CMakeFiles/DataTableTests.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=3,4,5 "Finished codegen for target DataTableTests"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=3,4,5,6 "Finished codegen for target DataTableTests"
 .PHONY : tests/CMakeFiles/DataTableTests.dir/codegen
 
 # clean rule for target.
@@ -300,7 +300,7 @@ tests/CMakeFiles/DataTableTests.dir/clean:
 _deps/googletest-build/googlemock/CMakeFiles/gmock.dir/all: _deps/googletest-build/googletest/CMakeFiles/gtest.dir/all
 	$(MAKE) $(MAKESILENT) -f _deps/googletest-build/googlemock/CMakeFiles/gmock.dir/build.make _deps/googletest-build/googlemock/CMakeFiles/gmock.dir/depend
 	$(MAKE) $(MAKESILENT) -f _deps/googletest-build/googlemock/CMakeFiles/gmock.dir/build.make _deps/googletest-build/googlemock/CMakeFiles/gmock.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=8,9 "Built target gmock"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=9,10 "Built target gmock"
 .PHONY : _deps/googletest-build/googlemock/CMakeFiles/gmock.dir/all
 
 # Build rule for subdir invocation for target.
@@ -317,7 +317,7 @@ gmock: _deps/googletest-build/googlemock/CMakeFiles/gmock.dir/rule
 # codegen rule for target.
 _deps/googletest-build/googlemock/CMakeFiles/gmock.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f _deps/googletest-build/googlemock/CMakeFiles/gmock.dir/build.make _deps/googletest-build/googlemock/CMakeFiles/gmock.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=8,9 "Finished codegen for target gmock"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=9,10 "Finished codegen for target gmock"
 .PHONY : _deps/googletest-build/googlemock/CMakeFiles/gmock.dir/codegen
 
 # clean rule for target.
@@ -333,7 +333,7 @@ _deps/googletest-build/googlemock/CMakeFiles/gmock_main.dir/all: _deps/googletes
 _deps/googletest-build/googlemock/CMakeFiles/gmock_main.dir/all: _deps/googletest-build/googletest/CMakeFiles/gtest.dir/all
 	$(MAKE) $(MAKESILENT) -f _deps/googletest-build/googlemock/CMakeFiles/gmock_main.dir/build.make _deps/googletest-build/googlemock/CMakeFiles/gmock_main.dir/depend
 	$(MAKE) $(MAKESILENT) -f _deps/googletest-build/googlemock/CMakeFiles/gmock_main.dir/build.make _deps/googletest-build/googlemock/CMakeFiles/gmock_main.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=10,11 "Built target gmock_main"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=11,12 "Built target gmock_main"
 .PHONY : _deps/googletest-build/googlemock/CMakeFiles/gmock_main.dir/all
 
 # Build rule for subdir invocation for target.
@@ -350,7 +350,7 @@ gmock_main: _deps/googletest-build/googlemock/CMakeFiles/gmock_main.dir/rule
 # codegen rule for target.
 _deps/googletest-build/googlemock/CMakeFiles/gmock_main.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f _deps/googletest-build/googlemock/CMakeFiles/gmock_main.dir/build.make _deps/googletest-build/googlemock/CMakeFiles/gmock_main.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=10,11 "Finished codegen for target gmock_main"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=11,12 "Finished codegen for target gmock_main"
 .PHONY : _deps/googletest-build/googlemock/CMakeFiles/gmock_main.dir/codegen
 
 # clean rule for target.
@@ -365,7 +365,7 @@ _deps/googletest-build/googlemock/CMakeFiles/gmock_main.dir/clean:
 _deps/googletest-build/googletest/CMakeFiles/gtest.dir/all:
 	$(MAKE) $(MAKESILENT) -f _deps/googletest-build/googletest/CMakeFiles/gtest.dir/build.make _deps/googletest-build/googletest/CMakeFiles/gtest.dir/depend
 	$(MAKE) $(MAKESILENT) -f _deps/googletest-build/googletest/CMakeFiles/gtest.dir/build.make _deps/googletest-build/googletest/CMakeFiles/gtest.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=12,13 "Built target gtest"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=13,14 "Built target gtest"
 .PHONY : _deps/googletest-build/googletest/CMakeFiles/gtest.dir/all
 
 # Build rule for subdir invocation for target.
@@ -382,7 +382,7 @@ gtest: _deps/googletest-build/googletest/CMakeFiles/gtest.dir/rule
 # codegen rule for target.
 _deps/googletest-build/googletest/CMakeFiles/gtest.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f _deps/googletest-build/googletest/CMakeFiles/gtest.dir/build.make _deps/googletest-build/googletest/CMakeFiles/gtest.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=12,13 "Finished codegen for target gtest"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=13,14 "Finished codegen for target gtest"
 .PHONY : _deps/googletest-build/googletest/CMakeFiles/gtest.dir/codegen
 
 # clean rule for target.
@@ -397,7 +397,7 @@ _deps/googletest-build/googletest/CMakeFiles/gtest.dir/clean:
 _deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/all: _deps/googletest-build/googletest/CMakeFiles/gtest.dir/all
 	$(MAKE) $(MAKESILENT) -f _deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/build.make _deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/depend
 	$(MAKE) $(MAKESILENT) -f _deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/build.make _deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=14,15 "Built target gtest_main"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=15,16 "Built target gtest_main"
 .PHONY : _deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/all
 
 # Build rule for subdir invocation for target.
@@ -414,7 +414,7 @@ gtest_main: _deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/rule
 # codegen rule for target.
 _deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f _deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/build.make _deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=14,15 "Finished codegen for target gtest_main"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=15,16 "Finished codegen for target gtest_main"
 .PHONY : _deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/codegen
 
 # clean rule for target.

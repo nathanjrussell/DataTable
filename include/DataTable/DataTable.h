@@ -39,6 +39,11 @@ public:
   // Row 0 is the header and is not supported.
   std::uint32_t lookupMap(std::uint64_t row, std::uint64_t col) const;
 
+  // Return the original (normalized) string value for a cell by decoding the mapped id
+  // and resolving id->string in the per-chunk map file.
+  // Row 0 is the header and is not supported.
+  std::string getValue(std::uint64_t row, std::uint64_t col) const;
+
   bool parseCompleted() const noexcept { return parseCompleted_; }
 
 private:

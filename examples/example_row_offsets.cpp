@@ -36,9 +36,15 @@ int main() {
     }
 
     std::cout << "Lookup map for row 11, col 3: " << dt.lookupMap(11, 3) << "\n";
+    std::cout << "Value for row 11, col 3: " << dt.getValue(11, 3) << "\n";
+    std::cout<< "Value for row 10, col 2: " << dt.getValue(10, 2) << "\n";
+    for (int row = 1; row < rowCount; ++row) {
+        for (int col = 0; col < colCount; ++col) {
+            std::cout << "Value for row " << row << ", col " << col << ": " << dt.getValue(row, col) << "\n";
+        }
+    }
 
 
 
   return 0;
 }
-

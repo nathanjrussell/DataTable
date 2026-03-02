@@ -12,6 +12,8 @@
 #include <utility>
 #include <vector>
 #include <sstream>
+#include <unordered_map>
+#include <limits>
 
 #include <nlohmann/json.hpp>
 
@@ -193,6 +195,12 @@ std::filesystem::path columnChunkBinPath(const std::string& outputDirectory,
   std::ostringstream name;
   name << "column_chunk_" << firstCol << "_" << lastCol << ".bin";
   return mappedDataDirPath(outputDirectory) / name.str();
+}
+
+std::filesystem::path chunkIntStringMapPath(const std::string& outputDirectory, std::uint64_t chunkIndex) {
+  std::ostringstream name;
+  name << "chunk_" << chunkIndex << "_int_string_map.bin";
+  return std::filesystem::path(outputDirectory) / "meta_data" / name.str();
 }
 
 std::uint32_t readBitsAt(std::ifstream& in, std::uint64_t bitOffset, std::uint8_t bitWidth) {
@@ -822,22 +830,24 @@ void DataTable::parseChunks(int /*threads*/) {
         std::min(firstCol + static_cast<std::uint64_t>(chunkSize_) - 1, columnCount_ - 1);
     const std::uint64_t chunkCols = lastCol - firstCol + 1;
 
-    // Per-column map for this chunk. Key->id where id 0 is reserved for empty.
-    std::vector<std::unordered_map<std::string, std::uint32_t>> maps;
-    maps.resize(static_cast<std::size_t>(chunkCols));
+    // Chunk-level dictionary:
+    // - id 0 is reserved for empty
+    // - ids are consistent across all columns in the chunk
+    std::unordered_map<std::string, std::uint32_t> chunkMap;
+    chunkMap.reserve(1024);
+    std::vector<std::string> idToString;
+    idToString.reserve(1024);
+    idToString.emplace_back(std::string());
 
     // For writing transposed, we need per-column sequences.
-    // For now (small datasets), store the chunk's mapped ids for all rows in memory.
-    // TODO: for huge datasets, spill per-column streams to temp files. We'll implement that later.
     std::vector<std::vector<std::uint32_t>> colValues;
     colValues.resize(static_cast<std::size_t>(chunkCols));
     for (auto& v : colValues) v.resize(static_cast<std::size_t>(dataRowCount));
 
     std::uint32_t maxIdThisChunk = 0;
 
-    // Parse rows.
     for (std::uint64_t dataRow = 0; dataRow < dataRowCount; ++dataRow) {
-      const std::uint64_t csvRow = dataRow + 1; // shift because row 0 is header
+      const std::uint64_t csvRow = dataRow + 1;
       const std::uint64_t rowStart = rowOffsets_[static_cast<std::size_t>(csvRow)];
 
       std::ifstream in(inputFilePath_, std::ios::binary);
@@ -845,7 +855,6 @@ void DataTable::parseChunks(int /*threads*/) {
       in.seekg(static_cast<std::streamoff>(rowStart), std::ios::beg);
       if (!in) throw std::runtime_error("Failed seeking input CSV during chunk parse");
 
-      // Skip fields before firstCol.
       char delim = 0;
       for (std::uint64_t c = 0; c < firstCol; ++c) {
         (void)readOneField(in, delim);
@@ -854,17 +863,16 @@ void DataTable::parseChunks(int /*threads*/) {
         }
       }
 
-      // Read chunk fields.
       for (std::uint64_t localCol = 0; localCol < chunkCols; ++localCol) {
         FieldToken tok = readOneField(in, delim);
 
         std::uint32_t id = 0;
         if (!tok.isEmpty) {
-          auto& m = maps[static_cast<std::size_t>(localCol)];
-          auto it = m.find(tok.key);
-          if (it == m.end()) {
-            const std::uint32_t nextId = static_cast<std::uint32_t>(m.size() + 1); // 0 reserved
-            it = m.emplace(tok.key, nextId).first;
+          auto it = chunkMap.find(tok.key);
+          if (it == chunkMap.end()) {
+            const std::uint32_t nextId = static_cast<std::uint32_t>(idToString.size());
+            it = chunkMap.emplace(tok.key, nextId).first;
+            idToString.push_back(tok.key);
             if (nextId > maxIdThisChunk) maxIdThisChunk = nextId;
           }
           id = it->second;
@@ -878,9 +886,45 @@ void DataTable::parseChunks(int /*threads*/) {
           }
         }
       }
+    }
 
-      // After reading chunkCols fields, if there are more columns overall, we don't consume them now.
-      // Row-level validation of total column count is done earlier during locateRowOffsets().
+    // Write chunk-level int->string map in the requested format:
+    //   uint32_t maxId
+    //   uint32_t offsets[maxId + 2]  (includes terminal offset)
+    //   blob bytes of all strings in id order
+    {
+      const auto path = chunkIntStringMapPath(outputDirectory_, chunkIndex);
+      std::ofstream out(path, std::ios::binary | std::ios::trunc);
+      if (!out) throw std::runtime_error("Failed to open chunk map file: " + path.string());
+
+      const std::uint32_t maxId = static_cast<std::uint32_t>(idToString.size() - 1);
+      out.write(reinterpret_cast<const char*>(&maxId), sizeof(maxId));
+      if (!out) throw std::runtime_error("Failed writing maxId");
+
+      const std::size_t offsetsCount = static_cast<std::size_t>(maxId) + 2;
+      std::vector<std::uint32_t> offsets(offsetsCount, 0u);
+
+      std::uint64_t cursor = 0;
+      for (std::uint32_t id = 0; id <= maxId; ++id) {
+        offsets[static_cast<std::size_t>(id)] = static_cast<std::uint32_t>(cursor);
+        cursor += static_cast<std::uint64_t>(idToString[static_cast<std::size_t>(id)].size());
+        if (cursor > std::numeric_limits<std::uint32_t>::max()) {
+          throw std::runtime_error("chunk int->string blob exceeds 4GB");
+        }
+      }
+      offsets[static_cast<std::size_t>(maxId) + 1] = static_cast<std::uint32_t>(cursor);
+
+      out.write(reinterpret_cast<const char*>(offsets.data()),
+                static_cast<std::streamsize>(offsets.size() * sizeof(std::uint32_t)));
+      if (!out) throw std::runtime_error("Failed writing offsets");
+
+      for (std::uint32_t id = 0; id <= maxId; ++id) {
+        const auto& s = idToString[static_cast<std::size_t>(id)];
+        if (!s.empty()) {
+          out.write(s.data(), static_cast<std::streamsize>(s.size()));
+          if (!out) throw std::runtime_error("Failed writing string bytes");
+        }
+      }
     }
 
     const std::uint8_t bitWidth = bitsRequired(maxIdThisChunk);
@@ -889,7 +933,6 @@ void DataTable::parseChunks(int /*threads*/) {
 
     BitWriter bw(columnChunkBinPath(outputDirectory_, firstCol, lastCol));
 
-    // Transposed output: for each column in chunk, write all data rows.
     for (std::uint64_t localCol = 0; localCol < chunkCols; ++localCol) {
       const auto& vals = colValues[static_cast<std::size_t>(localCol)];
       for (std::uint64_t dataRow = 0; dataRow < dataRowCount; ++dataRow) {
@@ -940,6 +983,56 @@ std::uint32_t DataTable::lookupMap(std::uint64_t row, std::uint64_t col) const {
   if (!in) throw std::runtime_error("Failed to open mapped_data chunk file");
 
   return readBitsAt(in, bitOffset, bitWidth);
+}
+
+std::string DataTable::getValue(std::uint64_t row, std::uint64_t col) const {
+  ensureParsed();
+  if (row >= rowCount_) throw std::out_of_range("row out of range");
+  if (col >= columnCount_) throw std::out_of_range("col out of range");
+  if (row == 0) throw std::runtime_error("getValue() is not supported for header row");
+
+  const std::uint32_t id = lookupMap(row, col);
+
+  const std::uint64_t chunkIndex = col / static_cast<std::uint64_t>(chunkSize_);
+  const auto path = chunkIntStringMapPath(outputDirectory_, chunkIndex);
+
+  std::ifstream in(path, std::ios::binary);
+  if (!in) throw std::runtime_error("Failed to open chunk map file: " + path.string());
+
+  std::uint32_t maxId = 0;
+  in.read(reinterpret_cast<char*>(&maxId), sizeof(maxId));
+  if (!in) throw std::runtime_error("Failed reading maxId");
+  if (id > maxId) throw std::runtime_error("id out of range for this chunk");
+
+  const std::uint64_t offsetsCount = static_cast<std::uint64_t>(maxId) + 2;
+  const std::uint64_t offsetsBase = sizeof(std::uint32_t);
+
+  std::uint32_t start = 0;
+  std::uint32_t end = 0;
+
+  in.seekg(static_cast<std::streamoff>(offsetsBase + static_cast<std::uint64_t>(id) * sizeof(std::uint32_t)),
+           std::ios::beg);
+  in.read(reinterpret_cast<char*>(&start), sizeof(start));
+  in.seekg(static_cast<std::streamoff>(offsetsBase + static_cast<std::uint64_t>(id + 1) * sizeof(std::uint32_t)),
+           std::ios::beg);
+  in.read(reinterpret_cast<char*>(&end), sizeof(end));
+  if (!in) throw std::runtime_error("Failed reading offsets");
+  if (end < start) throw std::runtime_error("corrupt offsets");
+
+  const std::uint32_t len = end - start;
+  const std::uint64_t blobBase = sizeof(std::uint32_t) + offsetsCount * sizeof(std::uint32_t);
+
+  in.seekg(static_cast<std::streamoff>(blobBase + start), std::ios::beg);
+  if (!in) throw std::runtime_error("Failed seeking blob");
+
+  std::string s;
+  s.resize(len);
+  if (len > 0) {
+    in.read(s.data(), static_cast<std::streamsize>(len));
+    if (!in) throw std::runtime_error("Failed reading string");
+  }
+
+  return s;
 }
 
 }  // namespace DataTableLib

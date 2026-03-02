@@ -1,5 +1,5 @@
 {
-  "tests": 11,
+  "tests": 12,
   "name": "AllTests",
   "testsuites": [
     {
@@ -60,6 +60,17 @@
           "name": "Parse_RowOffsets_FromPythonIndex_Threads1To10",
           "file": "\/Users\/nathan\/github\/DataTable\/tests\/test_DataTable_PythonGeneratedIndex.cpp",
           "line": 67
+        }
+      ]
+    },
+    {
+      "name": "DataSet1",
+      "tests": 1,
+      "testsuite": [
+        {
+          "name": "GetValue_MatchesEveryCell",
+          "file": "\/Users\/nathan\/github\/DataTable\/tests\/test_get_value_data_set_1.cpp",
+          "line": 20
         }
       ]
     }

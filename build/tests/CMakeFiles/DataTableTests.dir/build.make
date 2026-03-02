@@ -100,22 +100,38 @@ tests/CMakeFiles/DataTableTests.dir/test_DataTable_PythonGeneratedIndex.cpp.s: c
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/DataTableTests.dir/test_DataTable_PythonGeneratedIndex.cpp.s"
 	cd /Users/nathan/github/DataTable/build/tests && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/nathan/github/DataTable/tests/test_DataTable_PythonGeneratedIndex.cpp -o CMakeFiles/DataTableTests.dir/test_DataTable_PythonGeneratedIndex.cpp.s
 
+tests/CMakeFiles/DataTableTests.dir/test_get_value_data_set_1.cpp.o: tests/CMakeFiles/DataTableTests.dir/flags.make
+tests/CMakeFiles/DataTableTests.dir/test_get_value_data_set_1.cpp.o: /Users/nathan/github/DataTable/tests/test_get_value_data_set_1.cpp
+tests/CMakeFiles/DataTableTests.dir/test_get_value_data_set_1.cpp.o: tests/CMakeFiles/DataTableTests.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object tests/CMakeFiles/DataTableTests.dir/test_get_value_data_set_1.cpp.o"
+	cd /Users/nathan/github/DataTable/build/tests && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT tests/CMakeFiles/DataTableTests.dir/test_get_value_data_set_1.cpp.o -MF CMakeFiles/DataTableTests.dir/test_get_value_data_set_1.cpp.o.d -o CMakeFiles/DataTableTests.dir/test_get_value_data_set_1.cpp.o -c /Users/nathan/github/DataTable/tests/test_get_value_data_set_1.cpp
+
+tests/CMakeFiles/DataTableTests.dir/test_get_value_data_set_1.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/DataTableTests.dir/test_get_value_data_set_1.cpp.i"
+	cd /Users/nathan/github/DataTable/build/tests && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/nathan/github/DataTable/tests/test_get_value_data_set_1.cpp > CMakeFiles/DataTableTests.dir/test_get_value_data_set_1.cpp.i
+
+tests/CMakeFiles/DataTableTests.dir/test_get_value_data_set_1.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/DataTableTests.dir/test_get_value_data_set_1.cpp.s"
+	cd /Users/nathan/github/DataTable/build/tests && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/nathan/github/DataTable/tests/test_get_value_data_set_1.cpp -o CMakeFiles/DataTableTests.dir/test_get_value_data_set_1.cpp.s
+
 # Object files for target DataTableTests
 DataTableTests_OBJECTS = \
 "CMakeFiles/DataTableTests.dir/test_DataTable.cpp.o" \
-"CMakeFiles/DataTableTests.dir/test_DataTable_PythonGeneratedIndex.cpp.o"
+"CMakeFiles/DataTableTests.dir/test_DataTable_PythonGeneratedIndex.cpp.o" \
+"CMakeFiles/DataTableTests.dir/test_get_value_data_set_1.cpp.o"
 
 # External object files for target DataTableTests
 DataTableTests_EXTERNAL_OBJECTS =
 
 tests/DataTableTests: tests/CMakeFiles/DataTableTests.dir/test_DataTable.cpp.o
 tests/DataTableTests: tests/CMakeFiles/DataTableTests.dir/test_DataTable_PythonGeneratedIndex.cpp.o
+tests/DataTableTests: tests/CMakeFiles/DataTableTests.dir/test_get_value_data_set_1.cpp.o
 tests/DataTableTests: tests/CMakeFiles/DataTableTests.dir/build.make
 tests/DataTableTests: libDataTable.a
 tests/DataTableTests: lib/libgtest_main.a
 tests/DataTableTests: lib/libgtest.a
 tests/DataTableTests: tests/CMakeFiles/DataTableTests.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX executable DataTableTests"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/nathan/github/DataTable/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX executable DataTableTests"
 	cd /Users/nathan/github/DataTable/build/tests && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/DataTableTests.dir/link.txt --verbose=$(VERBOSE)
 	cd /Users/nathan/github/DataTable/build/tests && /opt/homebrew/bin/cmake -D TEST_TARGET=DataTableTests -D TEST_EXECUTABLE=/Users/nathan/github/DataTable/build/tests/DataTableTests -D TEST_EXECUTOR= -D TEST_WORKING_DIR=/Users/nathan/github/DataTable/build/tests -D TEST_EXTRA_ARGS= -D TEST_PROPERTIES= -D TEST_PREFIX= -D TEST_SUFFIX= -D TEST_FILTER= -D NO_PRETTY_TYPES=FALSE -D NO_PRETTY_VALUES=FALSE -D TEST_LIST=DataTableTests_TESTS -D CTEST_FILE=/Users/nathan/github/DataTable/build/tests/DataTableTests[1]_tests.cmake -D TEST_DISCOVERY_TIMEOUT=5 -D TEST_DISCOVERY_EXTRA_ARGS= -D TEST_XML_OUTPUT_DIR= -P /opt/homebrew/share/cmake/Modules/GoogleTestAddTests.cmake
 
