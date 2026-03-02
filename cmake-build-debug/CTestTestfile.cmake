@@ -1,6 +1,6 @@
 # CMake generated Testfile for 
-# Source directory: /Users/nathan/github/DataTable
-# Build directory: /Users/nathan/github/DataTable/cmake-build-debug
+# Source directory: /Volumes/DockDrive/research/darkome/DataTable
+# Build directory: /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug
 # 
 # This file includes the relevant testing commands required for 
 # testing this directory and lists subdirectories to be tested as well.

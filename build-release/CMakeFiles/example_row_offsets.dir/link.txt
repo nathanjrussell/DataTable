@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/example_row_offsets.dir/examples/example_row_offsets.cpp.o -o example_row_offsets  libDataTable.a

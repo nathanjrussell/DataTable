@@ -5,8 +5,8 @@ cmake_minimum_required(VERSION ${CMAKE_VERSION}) # this file comes with cmake
 
 # Make file names absolute:
 #
-get_filename_component(filename "/Users/nathan/github/DataTable/cmake-build-debug/_deps/googletest-subbuild/googletest-populate-prefix/src/v1.14.0.zip" ABSOLUTE)
-get_filename_component(directory "/Users/nathan/github/DataTable/cmake-build-debug/_deps/googletest-src" ABSOLUTE)
+get_filename_component(filename "/Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/googletest-subbuild/googletest-populate-prefix/src/v1.14.0.zip" ABSOLUTE)
+get_filename_component(directory "/Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/googletest-src" ABSOLUTE)
 
 message(VERBOSE "extracting...
      src='${filename}'
@@ -28,8 +28,8 @@ file(MAKE_DIRECTORY "${ut_dir}")
 
 # Extract it:
 #
-message(VERBOSE "extracting... [tar xf]")
-execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf ${filename} 
+message(VERBOSE "extracting... [tar xfz]")
+execute_process(COMMAND ${CMAKE_COMMAND} -E tar xfz ${filename} 
   WORKING_DIRECTORY ${ut_dir}
   RESULT_VARIABLE rv
 )

@@ -10,11 +10,11 @@ int main() {
   // Hard-coded paths for a simple visual spot-check.
   // Update this path to point to your generated CSV if needed.
   const std::filesystem::path csvPath =
-      std::filesystem::path("tests") / "test_data_sets" / "data_set_1.csv";
+      std::filesystem::path("tests") / "test_data_sets" / "large_datasets"/ "test_dataset_60k_20k.csv";
   // Output directory is only used for meta_data/.
-  const std::filesystem::path outDir = std::filesystem::path("tests") / "test_data_sets" / "data_output" / "data_set_1_out";
+  const std::filesystem::path outDir = std::filesystem::path("tests") / "test_data_sets" / "data_output" / "large_dataset_60k_20k";
 
-  const int threads = 1;
+  const int threads = 10;
 
   DataTable dt(csvPath.string(), outDir.string());
   dt.parse(threads);

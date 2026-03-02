@@ -1,0 +1,13 @@
+DataTable.ConstructorAndSetters_StorePaths 5 0.00131305
+DataTable.MetadataAccess_ThrowsBeforeParse 5 0.00104871
+DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack 2 0.0158299
+DataTable.Parse_PreservesWhitespaceInsideQuotes 4 0.00615944
+DataTable.Parse_HandlesEscapedQuotesInHeader 4 0.00645175
+DataTable.GetColumnHeader_OutOfRangeThrows 4 0.00725034
+DataTable.Parse_HeaderLongerThan255BytesThrows 5 0.00136311
+DataTable.Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10 4 0.606053
+DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads1 5 0.00491807
+DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads2To5 5 0.0164809
+DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10 4 0.632252
+DataSet1.GetValue_MatchesEveryCell 4 0.00699496
+---

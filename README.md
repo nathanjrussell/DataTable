@@ -69,16 +69,44 @@ counts comma delimiters outside quotes and throws if any row does not have the s
 
 ## Build
 
+Configure and build using CMake (out-of-source build):
+
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build -j
 ```
 
-## Run tests
+### Run unit tests (ctest)
+
+After building, run the test suite via CTest:
 
 ```sh
 ctest --test-dir build --output-on-failure
 ```
+
+Notes:
+- If you change CMake options (or switch Debug/Release), re-run the `cmake -S ...` configure step.
+- You can also run a single test by using CTest's `-R` regex filter.
+
+### Build and run the `example_row_offsets` example
+
+The example is built when `DATATABLE_BUILD_EXAMPLES` is ON (it is ON by default in `CMakeLists.txt`).
+
+1) Configure + build (same as above):
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build -j
+```
+
+2) Run the example executable:
+
+```sh
+./build/example_row_offsets
+```
+
+If you built with a multi-config generator (common on Windows) or you selected `-DCMAKE_BUILD_TYPE=Release`,
+adjust the binary path accordingly.
 
 ## CLion
 

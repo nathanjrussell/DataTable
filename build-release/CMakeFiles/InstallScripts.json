@@ -1,0 +1,12 @@
+{
+	"InstallScripts" : 
+	[
+		"/Volumes/DockDrive/research/darkome/DataTable/build-release/cmake_install.cmake",
+		"/Volumes/DockDrive/research/darkome/DataTable/build-release/_deps/nlohmann_json-build/cmake_install.cmake",
+		"/Volumes/DockDrive/research/darkome/DataTable/build-release/tests/cmake_install.cmake",
+		"/Volumes/DockDrive/research/darkome/DataTable/build-release/_deps/googletest-build/cmake_install.cmake",
+		"/Volumes/DockDrive/research/darkome/DataTable/build-release/_deps/googletest-build/googlemock/cmake_install.cmake",
+		"/Volumes/DockDrive/research/darkome/DataTable/build-release/_deps/googletest-build/googletest/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

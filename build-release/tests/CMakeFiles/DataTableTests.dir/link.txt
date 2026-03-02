@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG -O3 -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/DataTableTests.dir/test_DataTable.cpp.o CMakeFiles/DataTableTests.dir/test_DataTable_PythonGeneratedIndex.cpp.o CMakeFiles/DataTableTests.dir/test_get_value_data_set_1.cpp.o -o DataTableTests  ../libDataTable.a ../lib/libgtest_main.a ../lib/libgtest.a

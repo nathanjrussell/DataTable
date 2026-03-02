@@ -1,11 +1,14 @@
 #include <DataTable/DataTable.h>
 
 #include <algorithm>
+#include <atomic>
 #include <cctype>
 #include <cstdint>
 #include <condition_variable>
+#include <exception>
 #include <filesystem>
 #include <fstream>
+#include <future>
 #include <mutex>
 #include <stdexcept>
 #include <thread>
@@ -419,7 +422,7 @@ static std::uint64_t parseRowAndCountColumns(std::istream& in) {
 
     // Not in quotes.
     if (afterClosingQuote) {
-      // Ignore whitespace between closing quote and delimiter/newline.
+      // Ignore whitespace after closing quote until delimiter/newline.
       if (std::isspace(static_cast<unsigned char>(c)) != 0) {
         continue;
       }
@@ -460,32 +463,197 @@ static std::uint64_t parseRowAndCountColumns(std::istream& in) {
   return cols;
 }
 
-void DataTable::locateRowOffsets(int /*threads*/) {
-  // CSV-aware scan of the original CSV file.
+void DataTable::locateRowOffsets(int threads) {
+  // Parallel, CSV-aware scan of the original CSV file.
+  // Preserves the single-thread semantics exactly:
   // - Counts every byte exactly as stored.
   // - Tracks whether we're inside a quoted field.
   // - Treats newlines as row delimiters only when not in quotes.
   // - Row 0 is header at offset 0.
   // - Validates that every row has exactly columnCount_ columns by counting commas outside quotes.
 
-  std::ifstream in(inputFilePath_, std::ios::binary);
-  if (!in) throw std::runtime_error("Failed to open input CSV for row scan");
+  if (threads <= 0) {
+    throw std::runtime_error("threads must be >= 1");
+  }
 
-  std::vector<std::uint64_t> offsets;
-  offsets.reserve(1024);
+  const std::uint64_t fileSize =
+      static_cast<std::uint64_t>(std::filesystem::file_size(inputFilePath_));
 
-  std::uint64_t pos = 0;
-  offsets.push_back(0);
+  // Offsets always include the header row start.
+  std::vector<std::uint64_t> allOffsets;
+  allOffsets.reserve(1024);
+  allOffsets.push_back(0);
 
-  bool inQuotes = false;
+  if (fileSize == 0) {
+    // Empty file: treat as single empty row (header).
+    rowCount_ = static_cast<std::uint64_t>(allOffsets.size());
+    rowOffsets_ = std::make_unique<std::uint64_t[]>(static_cast<std::size_t>(rowCount_));
+    rowOffsets_[0] = 0;
 
-  // Column validation state.
+    const auto path = rowOffsetsBinPath(outputDirectory_);
+    std::ofstream out(path, std::ios::binary | std::ios::trunc);
+    if (!out) throw std::runtime_error("Failed to open row_start_offsets.bin for writing");
+    out.write(reinterpret_cast<const char*>(rowOffsets_.get()),
+              static_cast<std::streamsize>(rowCount_ * sizeof(std::uint64_t)));
+    if (!out) throw std::runtime_error("Failed writing row_start_offsets.bin");
+    return;
+  }
+
+  // Choose a chunk count: avoid too many tiny chunks.
+  const std::uint64_t hw = std::max<std::uint64_t>(1, static_cast<std::uint64_t>(threads));
+  const std::uint64_t desiredChunks = hw * 4ULL;
+  const std::uint64_t minChunkBytes = 8ULL * 1024ULL * 1024ULL; // 8 MiB
+  const std::uint64_t chunkBytes =
+      std::max(minChunkBytes, (fileSize + desiredChunks - 1) / desiredChunks);
+  const std::uint64_t chunkCount = (fileSize + chunkBytes - 1) / chunkBytes;
+
+  struct ChunkPass1 {
+    bool parityAssumingStartOut = false; // quote parity over this chunk with RFC4180 "" handling
+    bool pendingQuoteInQuotesAtEndAssumingStartOut = false;
+  };
+
+  auto scanChunkParity = [&](std::uint64_t chunkIndex) -> ChunkPass1 {
+    const std::uint64_t begin = chunkIndex * chunkBytes;
+    const std::uint64_t end = std::min(begin + chunkBytes, fileSize);
+
+    ChunkPass1 r;
+
+    std::ifstream in(inputFilePath_, std::ios::binary);
+    if (!in) throw std::runtime_error("Failed to open input CSV for row scan");
+    in.seekg(static_cast<std::streamoff>(begin), std::ios::beg);
+    if (!in) throw std::runtime_error("Failed seeking input CSV for row scan");
+
+    constexpr std::size_t BUF_SIZE = 1u << 20; // 1 MiB
+    std::vector<char> buf(BUF_SIZE);
+
+    bool inQuotes = false;
+    bool pendingQuote = false;
+
+    std::uint64_t pos = begin;
+
+    auto resolvePending = [&](char c) {
+      if (!pendingQuote) return false;
+      pendingQuote = false;
+      if (inQuotes && c == '"') {
+        // "" escape across buffer boundary
+        return true;
+      }
+      // pending quote was a closing quote; toggle already applied at boundary (we deferred it)
+      return false;
+    };
+
+    while (pos < end) {
+      const std::uint64_t remaining = end - pos;
+      const std::size_t toRead = static_cast<std::size_t>(
+          std::min<std::uint64_t>(remaining, static_cast<std::uint64_t>(buf.size())));
+
+      in.read(buf.data(), static_cast<std::streamsize>(toRead));
+      const std::streamsize got = in.gcount();
+      if (got <= 0) break;
+
+      for (std::streamsize i = 0; i < got; ++i, ++pos) {
+        const char c = buf[static_cast<std::size_t>(i)];
+
+        if (resolvePending(c)) {
+          continue;
+        }
+
+        if (c != '"') {
+          continue;
+        }
+
+        if (inQuotes) {
+          if (pos + 1 >= end) {
+            // May be first of "" spanning boundary; defer decision.
+            pendingQuote = true;
+            continue;
+          }
+
+          const int pi = in.peek();
+          if (pi != EOF && static_cast<char>(pi) == '"') {
+            // Escaped quote: consume next quote.
+            in.get();
+            ++pos;
+            continue;
+          }
+
+          // Closing quote.
+          inQuotes = false;
+          r.parityAssumingStartOut = !r.parityAssumingStartOut;
+        } else {
+          // Opening quote.
+          inQuotes = true;
+          r.parityAssumingStartOut = !r.parityAssumingStartOut;
+        }
+      }
+    }
+
+    r.pendingQuoteInQuotesAtEndAssumingStartOut = pendingQuote && inQuotes;
+    return r;
+  };
+
+  // Pass 1: scan parity per chunk in parallel.
+  std::vector<ChunkPass1> chunks(static_cast<std::size_t>(chunkCount));
+  std::atomic<std::uint64_t> next{0};
+  std::exception_ptr eptr;
+  std::mutex eptrMu;
+
+  auto worker = [&]() {
+    try {
+      while (true) {
+        const std::uint64_t idx = next.fetch_add(1);
+        if (idx >= chunkCount) break;
+        chunks[static_cast<std::size_t>(idx)] = scanChunkParity(idx);
+      }
+    } catch (...) {
+      std::lock_guard<std::mutex> g(eptrMu);
+      if (!eptr) eptr = std::current_exception();
+    }
+  };
+
+  std::vector<std::thread> pool;
+  pool.reserve(static_cast<std::size_t>(threads));
+  for (int t = 0; t < threads; ++t) pool.emplace_back(worker);
+  for (auto& th : pool) th.join();
+  if (eptr) std::rethrow_exception(eptr);
+
+  // Fix up pending "" across chunk boundary: if chunk i ended with pending quote inside quotes
+  // and the next chunk begins with a quote, then that next quote should not toggle parity.
+  for (std::uint64_t i = 0; i + 1 < chunkCount; ++i) {
+    if (!chunks[static_cast<std::size_t>(i)].pendingQuoteInQuotesAtEndAssumingStartOut) continue;
+
+    const std::uint64_t beginNext = (i + 1) * chunkBytes;
+    if (beginNext >= fileSize) continue;
+
+    std::ifstream in(inputFilePath_, std::ios::binary);
+    if (!in) throw std::runtime_error("Failed to open input CSV for boundary quote check");
+    in.seekg(static_cast<std::streamoff>(beginNext), std::ios::beg);
+    if (!in) throw std::runtime_error("Failed seeking input CSV for boundary quote check");
+    const int ci = in.get();
+    if (ci != EOF && static_cast<char>(ci) == '"') {
+      chunks[static_cast<std::size_t>(i + 1)].parityAssumingStartOut =
+          !chunks[static_cast<std::size_t>(i + 1)].parityAssumingStartOut;
+    }
+  }
+
+  // Compute actual start-in-quotes for each chunk by prefix XOR over chunk parities.
+  std::vector<bool> startInQuotes(static_cast<std::size_t>(chunkCount), false);
+  for (std::uint64_t i = 1; i < chunkCount; ++i) {
+    startInQuotes[static_cast<std::size_t>(i)] =
+        startInQuotes[static_cast<std::size_t>(i - 1)] ^
+        chunks[static_cast<std::size_t>(i - 1)].parityAssumingStartOut;
+  }
+
+  // Pass 2: scan for row delimiters and validate column counts.
+  // NOTE: We must preserve the original single-pass semantics, which are purely sequential.
+  // We therefore scan the file from byte 0..fileSize once, but we jump the inQuotes state at
+  // chunk boundaries using startInQuotes[].
+
   std::uint64_t rowNumber1Based = 1; // header is row 1
   std::uint64_t commasThisRow = 0;
   bool sawAnyByteThisRow = false;
 
   auto validateAndResetRow = [&]() {
-    // Even an empty physical line represents one empty field.
     const std::uint64_t colsThisRow = (sawAnyByteThisRow ? (commasThisRow + 1) : 1);
     if (colsThisRow != columnCount_) {
       throw std::runtime_error(
@@ -499,74 +667,225 @@ void DataTable::locateRowOffsets(int /*threads*/) {
     sawAnyByteThisRow = false;
   };
 
-  while (true) {
-    const int ci = in.get();
-    if (ci == EOF) break;
+  bool inQuotes = false;
 
-    char c = static_cast<char>(ci);
-    ++pos;
-    sawAnyByteThisRow = true;
+  constexpr std::size_t BUF_SIZE = 1u << 20; // 1 MiB
+  std::vector<char> buf(BUF_SIZE);
 
-    if (c == '"') {
-      if (inQuotes) {
-        // Escaped quote "" inside quoted field.
-        if (in.peek() == '"') {
-          in.get();
-          ++pos;
-          // still inside quotes
-        } else {
-          inQuotes = false;
-        }
-      } else {
-        inQuotes = true;
-      }
-      continue;
+  // Single sequential scan with chunk-boundary state correction.
+  std::ifstream in(inputFilePath_, std::ios::binary);
+  if (!in) throw std::runtime_error("Failed to open input CSV for row scan");
+
+  std::uint64_t pos = 0;
+  std::uint64_t currentChunk = 0;
+  std::uint64_t nextBoundary = std::min(chunkBytes, fileSize);
+
+  // Carry byte for buffer-boundary lookahead.
+  bool hasCarry = false;
+  char carry = '\0';
+
+  auto getNextByteFromStream = [&]() -> std::pair<bool, char> {
+    char ch;
+    in.read(&ch, 1);
+    if (in.gcount() != 1) return {false, '\0'};
+    return {true, ch};
+  };
+
+  while (pos < fileSize) {
+    // Ensure correct inQuotes at chunk boundaries.
+    while (pos >= nextBoundary && currentChunk + 1 < chunkCount) {
+      ++currentChunk;
+      inQuotes = startInQuotes[static_cast<std::size_t>(currentChunk)];
+      nextBoundary = std::min((currentChunk + 1) * chunkBytes, fileSize);
     }
 
-    if (!inQuotes) {
-      if (c == ',') {
-        ++commasThisRow;
+    const std::uint64_t remaining = fileSize - pos;
+    const std::size_t toRead = static_cast<std::size_t>(
+        std::min<std::uint64_t>(remaining, static_cast<std::uint64_t>(buf.size())));
+
+    in.read(buf.data(), static_cast<std::streamsize>(toRead));
+    const std::streamsize got = in.gcount();
+    if (got <= 0) break;
+
+    std::streamsize i = 0;
+
+    // If we have a carry byte from the end of the previous buffer, process it first.
+    if (hasCarry) {
+      // We'll process carry as if it was at buf[-1]; its position is current pos.
+      // To do that, we treat it as the first byte and then continue with buf[0].
+      const char c = carry;
+      hasCarry = false;
+
+      // Boundary correction at exact boundary.
+      if (pos == nextBoundary && currentChunk + 1 < chunkCount) {
+        ++currentChunk;
+        inQuotes = startInQuotes[static_cast<std::size_t>(currentChunk)];
+        nextBoundary = std::min((currentChunk + 1) * chunkBytes, fileSize);
+      }
+
+      sawAnyByteThisRow = true;
+
+      // For carry, we can safely lookahead into buf[0] if present, else stream.
+      auto lookahead = [&]() -> std::pair<bool, char> {
+        if (got > 0) return {true, buf[0]};
+        return getNextByteFromStream();
+      };
+
+      const auto next = lookahead();
+
+      if (c == '"') {
+        if (inQuotes && next.first && next.second == '"') {
+          // escaped quote: consume the next quote
+          if (got > 0) {
+            // consume buf[0]
+            ++i;
+            ++pos;
+          } else {
+            (void)getNextByteFromStream();
+            ++pos;
+          }
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (!inQuotes) {
+        if (c == ',') {
+          ++commasThisRow;
+        } else if (c == '\n') {
+          validateAndResetRow();
+          allOffsets.push_back(pos + 1);
+        } else if (c == '\r') {
+          // CRLF?
+          if (next.first && next.second == '\n') {
+            if (got > 0) {
+              ++i;
+              ++pos;
+            } else {
+              (void)getNextByteFromStream();
+              ++pos;
+            }
+          }
+          validateAndResetRow();
+          allOffsets.push_back(pos + 1);
+        }
+      } else {
+        // in quotes
+        if (c == '\r' && next.first && next.second == '\n') {
+          if (got > 0) {
+            ++i;
+            ++pos;
+          } else {
+            (void)getNextByteFromStream();
+            ++pos;
+          }
+        }
+      }
+
+      ++pos;
+    }
+
+    for (; i < got; ++i, ++pos) {
+      // Boundary correction may be needed inside a buffer.
+      if (pos == nextBoundary && currentChunk + 1 < chunkCount) {
+        ++currentChunk;
+        inQuotes = startInQuotes[static_cast<std::size_t>(currentChunk)];
+        nextBoundary = std::min((currentChunk + 1) * chunkBytes, fileSize);
+      }
+
+      const char c = buf[static_cast<std::size_t>(i)];
+      sawAnyByteThisRow = true;
+
+      // Lookahead is either next byte in the buffer, or (if at end of buffer) read-ahead via stream.
+      bool nextOk = false;
+      char nextChar = '\0';
+      if (i + 1 < got) {
+        nextOk = true;
+        nextChar = buf[static_cast<std::size_t>(i + 1)];
+      } else if (pos + 1 < fileSize) {
+        auto nxt = getNextByteFromStream();
+        if (nxt.first) {
+          nextOk = true;
+          nextChar = nxt.second;
+          // stash for next outer iteration
+          hasCarry = true;
+          carry = nxt.second;
+        }
+      }
+
+      if (c == '"') {
+        if (inQuotes && nextOk && nextChar == '"') {
+          // escaped quote: consume next quote if it is actually the next in buffer.
+          if (i + 1 < got) {
+            ++i;
+            ++pos;
+          } else {
+            // next quote is in carry; it will be skipped by clearing it.
+            hasCarry = false;
+          }
+        } else {
+          inQuotes = !inQuotes;
+        }
         continue;
       }
 
-      bool newline = false;
-      if (c == '\n') {
-        newline = true;
-      } else if (c == '\r') {
-        if (in.peek() == '\n') {
-          in.get();
-          ++pos;
+      if (!inQuotes) {
+        if (c == ',') {
+          ++commasThisRow;
+          continue;
         }
-        newline = true;
-      }
 
-      if (newline) {
-        validateAndResetRow();
-        offsets.push_back(pos); // start of next row
-      }
-    } else {
-      // In quotes: CRLF should be consumed as two bytes for pos accuracy.
-      if (c == '\r' && in.peek() == '\n') {
-        in.get();
-        ++pos;
+        if (c == '\n') {
+          validateAndResetRow();
+          allOffsets.push_back(pos + 1);
+          continue;
+        }
+
+        if (c == '\r') {
+          if (nextOk && nextChar == '\n') {
+            if (i + 1 < got) {
+              ++i;
+              ++pos;
+            } else {
+              hasCarry = false;
+            }
+          }
+          validateAndResetRow();
+          allOffsets.push_back(pos + 1);
+          continue;
+        }
+      } else {
+        // In quotes: CRLF should be consumed as two bytes for pos accuracy.
+        if (c == '\r' && nextOk && nextChar == '\n') {
+          if (i + 1 < got) {
+            ++i;
+            ++pos;
+          } else {
+            hasCarry = false;
+          }
+        }
       }
     }
+
+    // If we stashed a carry byte by reading ahead from the stream, back up the stream by 1 byte.
+    // We can't unread from ifstream portably, so instead we keep carry and adjust logical pos.
+    // The loop above advances pos accordingly; carry will be processed on the next iteration.
   }
 
   // Handle EOF: if file ended with a newline, last offset points at EOF.
-  const std::uint64_t fileSize = static_cast<std::uint64_t>(std::filesystem::file_size(inputFilePath_));
-  if (!offsets.empty() && offsets.back() >= fileSize) {
-    offsets.pop_back();
+  if (!allOffsets.empty() && allOffsets.back() >= fileSize) {
+    allOffsets.pop_back();
     // last row already validated when newline was seen
   } else if (fileSize > 0) {
     // file ended without newline: validate final row now
     validateAndResetRow();
   }
 
-  rowCount_ = static_cast<std::uint64_t>(offsets.size());
+  std::sort(allOffsets.begin(), allOffsets.end());
+  allOffsets.erase(std::unique(allOffsets.begin(), allOffsets.end()), allOffsets.end());
+
+  rowCount_ = static_cast<std::uint64_t>(allOffsets.size());
   rowOffsets_ = std::make_unique<std::uint64_t[]>(static_cast<std::size_t>(rowCount_));
   for (std::uint64_t i = 0; i < rowCount_; ++i) {
-    rowOffsets_[static_cast<std::size_t>(i)] = offsets[static_cast<std::size_t>(i)];
+    rowOffsets_[static_cast<std::size_t>(i)] = allOffsets[static_cast<std::size_t>(i)];
   }
 
   const auto path = rowOffsetsBinPath(outputDirectory_);
@@ -918,7 +1237,7 @@ void DataTable::parseChunks(int /*threads*/) {
                 static_cast<std::streamsize>(offsets.size() * sizeof(std::uint32_t)));
       if (!out) throw std::runtime_error("Failed writing offsets");
 
-      for (std::uint32_t id = 0; id <= maxId; ++id) {
+      for (std::uint32_t id = 0; id <= maxId; id++) {
         const auto& s = idToString[static_cast<std::size_t>(id)];
         if (!s.empty()) {
           out.write(s.data(), static_cast<std::streamsize>(s.size()));

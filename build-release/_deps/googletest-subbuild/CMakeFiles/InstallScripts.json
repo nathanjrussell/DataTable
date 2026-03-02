@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/Volumes/DockDrive/research/darkome/DataTable/build-release/_deps/googletest-subbuild/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

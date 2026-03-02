@@ -1,0 +1,327 @@
+Start testing: Mar 02 15:01 EST
+----------------------------------------------------------
+1/12 Testing: DataTable.ConstructorAndSetters_StorePaths
+1/12 Test: DataTable.ConstructorAndSetters_StorePaths
+Command: "/Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/tests/DataTableTests" "--gtest_filter=DataTable.ConstructorAndSetters_StorePaths" "--gtest_also_run_disabled_tests"
+Directory: /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/tests
+"DataTable.ConstructorAndSetters_StorePaths" start time: Mar 02 15:01 EST
+Output:
+----------------------------------------------------------
+Running main() from /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = DataTable.ConstructorAndSetters_StorePaths
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from DataTable
+[ RUN      ] DataTable.ConstructorAndSetters_StorePaths
+[       OK ] DataTable.ConstructorAndSetters_StorePaths (0 ms)
+[----------] 1 test from DataTable (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"DataTable.ConstructorAndSetters_StorePaths" end time: Mar 02 15:01 EST
+"DataTable.ConstructorAndSetters_StorePaths" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/12 Testing: DataTable.MetadataAccess_ThrowsBeforeParse
+2/12 Test: DataTable.MetadataAccess_ThrowsBeforeParse
+Command: "/Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/tests/DataTableTests" "--gtest_filter=DataTable.MetadataAccess_ThrowsBeforeParse" "--gtest_also_run_disabled_tests"
+Directory: /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/tests
+"DataTable.MetadataAccess_ThrowsBeforeParse" start time: Mar 02 15:01 EST
+Output:
+----------------------------------------------------------
+Running main() from /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = DataTable.MetadataAccess_ThrowsBeforeParse
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from DataTable
+[ RUN      ] DataTable.MetadataAccess_ThrowsBeforeParse
+[       OK ] DataTable.MetadataAccess_ThrowsBeforeParse (0 ms)
+[----------] 1 test from DataTable (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"DataTable.MetadataAccess_ThrowsBeforeParse" end time: Mar 02 15:01 EST
+"DataTable.MetadataAccess_ThrowsBeforeParse" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/12 Testing: DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack
+3/12 Test: DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack
+Command: "/Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/tests/DataTableTests" "--gtest_filter=DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack" "--gtest_also_run_disabled_tests"
+Directory: /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/tests
+"DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack" start time: Mar 02 15:01 EST
+Output:
+----------------------------------------------------------
+Running main() from /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from DataTable
+[ RUN      ] DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack
+[       OK ] DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack (25 ms)
+[----------] 1 test from DataTable (25 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (25 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack" end time: Mar 02 15:01 EST
+"DataTable.Parse_WritesHeaderRowBin_AndGettersReadItBack" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/12 Testing: DataTable.Parse_PreservesWhitespaceInsideQuotes
+4/12 Test: DataTable.Parse_PreservesWhitespaceInsideQuotes
+Command: "/Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/tests/DataTableTests" "--gtest_filter=DataTable.Parse_PreservesWhitespaceInsideQuotes" "--gtest_also_run_disabled_tests"
+Directory: /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/tests
+"DataTable.Parse_PreservesWhitespaceInsideQuotes" start time: Mar 02 15:01 EST
+Output:
+----------------------------------------------------------
+Running main() from /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = DataTable.Parse_PreservesWhitespaceInsideQuotes
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from DataTable
+[ RUN      ] DataTable.Parse_PreservesWhitespaceInsideQuotes
+[       OK ] DataTable.Parse_PreservesWhitespaceInsideQuotes (18 ms)
+[----------] 1 test from DataTable (18 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (18 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"DataTable.Parse_PreservesWhitespaceInsideQuotes" end time: Mar 02 15:01 EST
+"DataTable.Parse_PreservesWhitespaceInsideQuotes" time elapsed: 00:00:00
+----------------------------------------------------------
+
+5/12 Testing: DataTable.Parse_HandlesEscapedQuotesInHeader
+5/12 Test: DataTable.Parse_HandlesEscapedQuotesInHeader
+Command: "/Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/tests/DataTableTests" "--gtest_filter=DataTable.Parse_HandlesEscapedQuotesInHeader" "--gtest_also_run_disabled_tests"
+Directory: /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/tests
+"DataTable.Parse_HandlesEscapedQuotesInHeader" start time: Mar 02 15:01 EST
+Output:
+----------------------------------------------------------
+Running main() from /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = DataTable.Parse_HandlesEscapedQuotesInHeader
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from DataTable
+[ RUN      ] DataTable.Parse_HandlesEscapedQuotesInHeader
+[       OK ] DataTable.Parse_HandlesEscapedQuotesInHeader (18 ms)
+[----------] 1 test from DataTable (18 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (18 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"DataTable.Parse_HandlesEscapedQuotesInHeader" end time: Mar 02 15:01 EST
+"DataTable.Parse_HandlesEscapedQuotesInHeader" time elapsed: 00:00:00
+----------------------------------------------------------
+
+6/12 Testing: DataTable.GetColumnHeader_OutOfRangeThrows
+6/12 Test: DataTable.GetColumnHeader_OutOfRangeThrows
+Command: "/Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/tests/DataTableTests" "--gtest_filter=DataTable.GetColumnHeader_OutOfRangeThrows" "--gtest_also_run_disabled_tests"
+Directory: /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/tests
+"DataTable.GetColumnHeader_OutOfRangeThrows" start time: Mar 02 15:01 EST
+Output:
+----------------------------------------------------------
+Running main() from /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = DataTable.GetColumnHeader_OutOfRangeThrows
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from DataTable
+[ RUN      ] DataTable.GetColumnHeader_OutOfRangeThrows
+[       OK ] DataTable.GetColumnHeader_OutOfRangeThrows (21 ms)
+[----------] 1 test from DataTable (21 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (21 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"DataTable.GetColumnHeader_OutOfRangeThrows" end time: Mar 02 15:01 EST
+"DataTable.GetColumnHeader_OutOfRangeThrows" time elapsed: 00:00:00
+----------------------------------------------------------
+
+7/12 Testing: DataTable.Parse_HeaderLongerThan255BytesThrows
+7/12 Test: DataTable.Parse_HeaderLongerThan255BytesThrows
+Command: "/Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/tests/DataTableTests" "--gtest_filter=DataTable.Parse_HeaderLongerThan255BytesThrows" "--gtest_also_run_disabled_tests"
+Directory: /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/tests
+"DataTable.Parse_HeaderLongerThan255BytesThrows" start time: Mar 02 15:01 EST
+Output:
+----------------------------------------------------------
+Running main() from /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = DataTable.Parse_HeaderLongerThan255BytesThrows
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from DataTable
+[ RUN      ] DataTable.Parse_HeaderLongerThan255BytesThrows
+[       OK ] DataTable.Parse_HeaderLongerThan255BytesThrows (1 ms)
+[----------] 1 test from DataTable (1 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (1 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"DataTable.Parse_HeaderLongerThan255BytesThrows" end time: Mar 02 15:01 EST
+"DataTable.Parse_HeaderLongerThan255BytesThrows" time elapsed: 00:00:00
+----------------------------------------------------------
+
+8/12 Testing: DataTable.Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10
+8/12 Test: DataTable.Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10
+Command: "/Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/tests/DataTableTests" "--gtest_filter=DataTable.Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10" "--gtest_also_run_disabled_tests"
+Directory: /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/tests
+"DataTable.Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10" start time: Mar 02 15:01 EST
+Output:
+----------------------------------------------------------
+Running main() from /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = DataTable.Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from DataTable
+[ RUN      ] DataTable.Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10
+[       OK ] DataTable.Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10 (2413 ms)
+[----------] 1 test from DataTable (2413 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (2413 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   2.42 sec
+----------------------------------------------------------
+Test Passed.
+"DataTable.Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10" end time: Mar 02 15:01 EST
+"DataTable.Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10" time elapsed: 00:00:02
+----------------------------------------------------------
+
+9/12 Testing: DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads1
+9/12 Test: DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads1
+Command: "/Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/tests/DataTableTests" "--gtest_filter=DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads1" "--gtest_also_run_disabled_tests"
+Directory: /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/tests
+"DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads1" start time: Mar 02 15:01 EST
+Output:
+----------------------------------------------------------
+Running main() from /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads1
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from DataTable
+[ RUN      ] DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads1
+[       OK ] DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads1 (19 ms)
+[----------] 1 test from DataTable (19 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (19 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads1" end time: Mar 02 15:01 EST
+"DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads1" time elapsed: 00:00:00
+----------------------------------------------------------
+
+10/12 Testing: DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads2To5
+10/12 Test: DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads2To5
+Command: "/Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/tests/DataTableTests" "--gtest_filter=DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads2To5" "--gtest_also_run_disabled_tests"
+Directory: /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/tests
+"DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads2To5" start time: Mar 02 15:01 EST
+Output:
+----------------------------------------------------------
+Running main() from /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads2To5
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from DataTable
+[ RUN      ] DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads2To5
+[       OK ] DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads2To5 (74 ms)
+[----------] 1 test from DataTable (74 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (74 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.08 sec
+----------------------------------------------------------
+Test Passed.
+"DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads2To5" end time: Mar 02 15:01 EST
+"DataTable.Parse_ThrowsWhenRowHasMissingColumn_Threads2To5" time elapsed: 00:00:00
+----------------------------------------------------------
+
+11/12 Testing: DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10
+11/12 Test: DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10
+Command: "/Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/tests/DataTableTests" "--gtest_filter=DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10" "--gtest_also_run_disabled_tests"
+Directory: /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/tests
+"DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10" start time: Mar 02 15:01 EST
+Output:
+----------------------------------------------------------
+Running main() from /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from DataTable
+[ RUN      ] DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10
+[       OK ] DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10 (2522 ms)
+[----------] 1 test from DataTable (2522 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (2522 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   2.53 sec
+----------------------------------------------------------
+Test Passed.
+"DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10" end time: Mar 02 15:01 EST
+"DataTable.Parse_RowOffsets_FromPythonIndex_Threads1To10" time elapsed: 00:00:02
+----------------------------------------------------------
+
+12/12 Testing: DataSet1.GetValue_MatchesEveryCell
+12/12 Test: DataSet1.GetValue_MatchesEveryCell
+Command: "/Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/tests/DataTableTests" "--gtest_filter=DataSet1.GetValue_MatchesEveryCell" "--gtest_also_run_disabled_tests"
+Directory: /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/tests
+"DataSet1.GetValue_MatchesEveryCell" start time: Mar 02 15:01 EST
+Output:
+----------------------------------------------------------
+Running main() from /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = DataSet1.GetValue_MatchesEveryCell
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from DataSet1
+[ RUN      ] DataSet1.GetValue_MatchesEveryCell
+[       OK ] DataSet1.GetValue_MatchesEveryCell (22 ms)
+[----------] 1 test from DataSet1 (22 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (22 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"DataSet1.GetValue_MatchesEveryCell" end time: Mar 02 15:01 EST
+"DataSet1.GetValue_MatchesEveryCell" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Mar 02 15:01 EST

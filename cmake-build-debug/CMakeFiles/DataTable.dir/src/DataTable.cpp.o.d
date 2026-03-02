@@ -1,6 +1,6 @@
 CMakeFiles/DataTable.dir/src/DataTable.cpp.o: \
-  /Users/nathan/github/DataTable/src/DataTable.cpp \
-  /Users/nathan/github/DataTable/include/DataTable/DataTable.h \
+  /Volumes/DockDrive/research/darkome/DataTable/src/DataTable.cpp \
+  /Volumes/DockDrive/research/darkome/DataTable/include/DataTable/DataTable.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cstdint \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__config \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__config_site \
@@ -820,6 +820,7 @@ CMakeFiles/DataTable.dir/src/DataTable.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/recursive_directory_iterator.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__filesystem/u8path.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/fstream \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/future \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/thread \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__thread/formatter.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__thread/jthread.h \
@@ -829,40 +830,40 @@ CMakeFiles/DataTable.dir/src/DataTable.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__thread/this_thread.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/chrono \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/forward_list \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/json.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/adl_serializer.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/abi_macros.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/conversions/from_json.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/json.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/adl_serializer.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/abi_macros.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/conversions/from_json.hpp \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/map \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__tree \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/valarray \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/exceptions.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/value_t.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/macro_scope.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/meta/detected.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/meta/void_t.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/thirdparty/hedley/hedley.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/exceptions.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/value_t.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/macro_scope.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/meta/detected.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/meta/void_t.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/thirdparty/hedley/hedley.hpp \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cassert \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/assert.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_assert.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_static_assert.h \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/string_escape.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/input/position_t.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/meta/cpp_future.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/meta/type_traits.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/iterators/iterator_traits.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/meta/call_std/begin.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/meta/call_std/end.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/json_fwd.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/string_concat.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/meta/identity_tag.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/meta/std_fs.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/conversions/to_json.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/iterators/iteration_proxy.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/byte_container_with_subtype.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/hash.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/input/binary_reader.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/input/input_adapters.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/string_escape.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/input/position_t.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/meta/cpp_future.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/meta/type_traits.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/iterators/iterator_traits.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/meta/call_std/begin.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/meta/call_std/end.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/json_fwd.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/string_concat.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/meta/identity_tag.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/meta/std_fs.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/conversions/to_json.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/iterators/iteration_proxy.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/byte_container_with_subtype.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/hash.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/input/binary_reader.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/input/input_adapters.hpp \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/numeric \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__numeric/accumulate.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__numeric/adjacent_difference.h \
@@ -879,22 +880,22 @@ CMakeFiles/DataTable.dir/src/DataTable.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__numeric/transform_reduce.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/execution \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/is_execution_policy.h \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/input/json_sax.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/input/lexer.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/meta/is_sax.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/input/parser.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/iterators/internal_iterator.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/iterators/primitive_iterator.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/iterators/iter_impl.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/iterators/json_reverse_iterator.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/json_custom_base_class.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/json_pointer.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/json_ref.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/output/binary_writer.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/output/output_adapters.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/output/serializer.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/conversions/to_chars.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/ordered_map.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/input/json_sax.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/input/lexer.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/meta/is_sax.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/input/parser.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/iterators/internal_iterator.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/iterators/primitive_iterator.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/iterators/iter_impl.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/iterators/json_reverse_iterator.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/json_custom_base_class.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/json_pointer.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/json_ref.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/output/binary_writer.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/output/output_adapters.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/output/serializer.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/conversions/to_chars.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/ordered_map.hpp \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/any \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/macro_unscope.hpp \
-  /Users/nathan/github/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/thirdparty/hedley/hedley_undef.hpp
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/detail/macro_unscope.hpp \
+  /Volumes/DockDrive/research/darkome/DataTable/cmake-build-debug/_deps/nlohmann_json-src/include/nlohmann/thirdparty/hedley/hedley_undef.hpp
