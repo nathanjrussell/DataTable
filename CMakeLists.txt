@@ -31,6 +31,14 @@ FetchContent_Declare(
 set(PROGRESSBAR_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(ProgressBar)
 
+# HashLibrary integration
+FetchContent_Declare(
+        HashLibrary
+        GIT_REPOSITORY git@github.com:nathanjrussell/HashLibrary.git
+        GIT_TAG v1.2.0
+)
+FetchContent_MakeAvailable(HashLibrary)
+
 add_library(DataTable)
 add_library(DataTable::DataTable ALIAS DataTable)
 
@@ -43,6 +51,7 @@ target_include_directories(DataTable PUBLIC
 target_link_libraries(DataTable PUBLIC
         nlohmann_json::nlohmann_json
         ProgressBar::progressbar
+        HashLibrary::sha256
 )
 
 target_compile_features(DataTable PUBLIC cxx_std_17)
