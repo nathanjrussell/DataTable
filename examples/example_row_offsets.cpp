@@ -23,6 +23,7 @@ int main() {
   dt.parse(threads);
   DataTable dt2;
   dt2.load(outDir.string());
+  std::cout<<dt2.getColumnHeaderJson()<<std::endl;
   int rowCount = static_cast<int>(dt2.getRowCount());
   int colCount = static_cast<int>(dt2.getColumnCount());
   std::cout << "Row count: " << rowCount << "\n";
