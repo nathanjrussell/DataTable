@@ -24,6 +24,10 @@ public:
   // Overload that sets/overrides the column chunk size (number of columns processed per iteration).
   void parse(int threads, std::uint32_t chunkSize);
 
+  // Load an already-parsed output directory (metadata + mapped_data) into a working state.
+  // This does not load the full dataset into memory; it only reads metadata needed for lookup/getValue.
+  void load(const std::string& directory);
+
   // No method below is valid unless parse() has completed successfully.
   std::uint64_t getColumnCount() const;
   std::string getColumnHeader(int col) const;
@@ -68,4 +72,3 @@ private:
 };
 
 } // namespace DataTableLib
-

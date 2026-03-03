@@ -17,12 +17,52 @@
 #include <sstream>
 #include <unordered_map>
 #include <limits>
+#include <array>
+#include <iomanip>
 
 #include <nlohmann/json.hpp>
+
+// Progress bars (single instance for this library; ProgressBars is internally synchronized)
+#include <progressbar/progress_bars.hpp>
 
 namespace DataTableLib {
 
 namespace {
+
+// One instance for the whole library (this translation unit).
+std::unique_ptr<progressbar::ProgressBars> g_progressBars;
+
+progressbar::ProgressBars& progressBars() {
+  if (!g_progressBars) {
+    progressbar::ProgressBars::Options options;
+    options.enabled = true;
+    // Don’t render progress bars unless we’re on an interactive terminal.
+    options.onlyRenderOnTty = true;
+    options.minRedrawInterval = std::chrono::milliseconds(40);
+    options.barWidth = 28;
+    options.removeCompletedAfter = std::chrono::milliseconds(2000);
+    g_progressBars = std::make_unique<progressbar::ProgressBars>(options);
+  }
+  return *g_progressBars;
+}
+
+int progressCreate(std::uint64_t total,
+                   const std::string& label,
+                   progressbar::ProgressBars::Color color = progressbar::ProgressBars::Color::Cyan) {
+  return progressBars().createProgressBar(total, label, color);
+}
+
+void progressTick(int id) {
+  progressBars().updateProgressBar(id);
+}
+
+void progressSet(int id, std::uint64_t value) {
+  progressBars().updateProgressBar(id, value);
+}
+
+void progressComplete(int id) {
+  progressBars().markProgressBarComplete(id);
+}
 
 std::string trimAsciiWhitespace(const std::string& s) {
   std::size_t start = 0;
@@ -206,30 +246,299 @@ std::filesystem::path chunkIntStringMapPath(const std::string& outputDirectory, 
   return std::filesystem::path(outputDirectory) / "meta_data" / name.str();
 }
 
-std::uint32_t readBitsAt(std::ifstream& in, std::uint64_t bitOffset, std::uint8_t bitWidth) {
-  const std::uint64_t byteOffset = bitOffset / 8;
-  const std::uint32_t bitInByte = static_cast<std::uint32_t>(bitOffset % 8);
+std::filesystem::path countsBinPath(const std::string& outputDirectory) {
+  return std::filesystem::path(outputDirectory) / "meta_data" / "counts.bin";
+}
 
-  const std::uint32_t totalBits = bitInByte + bitWidth;
-  const std::uint32_t bytesToRead = (totalBits + 7) / 8; // <= 5 for bitWidth<=32
+std::filesystem::path hashTxtPath(const std::string& outputDirectory) {
+  return std::filesystem::path(outputDirectory) / "meta_data" / "hash.txt";
+}
 
-  std::uint8_t buf[8] = {0};
+void writeCountsBin(const std::string& outputDirectory, std::uint64_t rows, std::uint64_t cols) {
+  const auto path = countsBinPath(outputDirectory);
+  std::ofstream out(path, std::ios::binary | std::ios::trunc);
+  if (!out) throw std::runtime_error("Failed to open counts.bin for writing: " + path.string());
+  writeU64(out, rows);
+  writeU64(out, cols);
+}
+
+bool tryReadCountsBin(const std::string& outputDirectory, std::uint64_t& rowsOut, std::uint64_t& colsOut) {
+  const auto path = countsBinPath(outputDirectory);
+  std::ifstream in(path, std::ios::binary);
+  if (!in) return false;
+  in.read(reinterpret_cast<char*>(&rowsOut), sizeof(rowsOut));
+  in.read(reinterpret_cast<char*>(&colsOut), sizeof(colsOut));
+  if (!in) return false;
+  return true;
+}
+
+std::string readTextFileTrimmed(const std::filesystem::path& path) {
+  std::ifstream in(path);
+  if (!in) throw std::runtime_error("Failed to open file: " + path.string());
+  std::ostringstream ss;
+  ss << in.rdbuf();
+  return trimAsciiWhitespace(ss.str());
+}
+
+void writeTextFile(const std::filesystem::path& path, const std::string& text) {
+  std::ofstream out(path, std::ios::trunc);
+  if (!out) throw std::runtime_error("Failed to open file for writing: " + path.string());
+  out << text;
+  if (!out) throw std::runtime_error("Failed writing file: " + path.string());
+}
+
+class Sha256 {
+public:
+  Sha256() { reset(); }
+
+  void reset() {
+    totalLen_ = 0;
+    bufferLen_ = 0;
+    state_ = {0x6a09e667U, 0xbb67ae85U, 0x3c6ef372U, 0xa54ff53aU,
+              0x510e527fU, 0x9b05688cU, 0x1f83d9abU, 0x5be0cd19U};
+  }
+
+  void update(const std::uint8_t* data, std::size_t len) {
+    if (len == 0) return;
+    totalLen_ += static_cast<std::uint64_t>(len);
+
+    std::size_t idx = 0;
+    if (bufferLen_ > 0) {
+      const std::size_t need = 64 - bufferLen_;
+      const std::size_t take = std::min(need, len);
+      std::copy(data, data + take, buffer_.begin() + static_cast<std::ptrdiff_t>(bufferLen_));
+      bufferLen_ += take;
+      idx += take;
+      if (bufferLen_ == 64) {
+        transform(buffer_.data());
+        bufferLen_ = 0;
+      }
+    }
+
+    while (idx + 64 <= len) {
+      transform(data + idx);
+      idx += 64;
+    }
+
+    const std::size_t rem = len - idx;
+    if (rem > 0) {
+      std::copy(data + idx, data + len, buffer_.begin());
+      bufferLen_ = rem;
+    }
+  }
+
+  std::array<std::uint8_t, 32> digest() {
+    // Padding: 0x80 then zeros, then 64-bit big-endian length in bits.
+    std::array<std::uint8_t, 64> pad{};
+    pad[0] = 0x80;
+
+    const std::uint64_t totalBits = totalLen_ * 8ULL;
+
+    const std::size_t padLen = (bufferLen_ < 56) ? (56 - bufferLen_) : (56 + 64 - bufferLen_);
+    update(pad.data(), padLen);
+
+    std::array<std::uint8_t, 8> lenBytes{};
+    for (int i = 0; i < 8; ++i) {
+      lenBytes[static_cast<std::size_t>(7 - i)] = static_cast<std::uint8_t>((totalBits >> (i * 8)) & 0xFFULL);
+    }
+    update(lenBytes.data(), lenBytes.size());
+
+    // Now buffer should be aligned and fully processed.
+    std::array<std::uint8_t, 32> out{};
+    for (int i = 0; i < 8; ++i) {
+      const std::uint32_t w = state_[static_cast<std::size_t>(i)];
+      out[static_cast<std::size_t>(i * 4 + 0)] = static_cast<std::uint8_t>((w >> 24) & 0xFFU);
+      out[static_cast<std::size_t>(i * 4 + 1)] = static_cast<std::uint8_t>((w >> 16) & 0xFFU);
+      out[static_cast<std::size_t>(i * 4 + 2)] = static_cast<std::uint8_t>((w >> 8) & 0xFFU);
+      out[static_cast<std::size_t>(i * 4 + 3)] = static_cast<std::uint8_t>((w >> 0) & 0xFFU);
+    }
+
+    return out;
+  }
+
+  std::string hexdigest() {
+    const auto d = digest();
+    std::ostringstream ss;
+    ss << std::hex << std::setfill('0');
+    for (std::uint8_t b : d) {
+      ss << std::setw(2) << static_cast<int>(b);
+    }
+    return ss.str();
+  }
+
+private:
+  static constexpr std::array<std::uint32_t, 64> K = {
+      0x428a2f98U, 0x71374491U, 0xb5c0fbcfU, 0xe9b5dba5U, 0x3956c25bU, 0x59f111f1U,
+      0x923f82a4U, 0xab1c5ed5U, 0xd807aa98U, 0x12835b01U, 0x243185beU, 0x550c7dc3U,
+      0x72be5d74U, 0x80deb1feU, 0x9bdc06a7U, 0xc19bf174U, 0xe49b69c1U, 0xefbe4786U,
+      0x0fc19dc6U, 0x240ca1ccU, 0x2de92c6fU, 0x4a7484aaU, 0x5cb0a9dcU, 0x76f988daU,
+      0x983e5152U, 0xa831c66dU, 0xb00327c8U, 0xbf597fc7U, 0xc6e00bf3U, 0xd5a79147U,
+      0x06ca6351U, 0x14292967U, 0x27b70a85U, 0x2e1b2138U, 0x4d2c6dfcU, 0x53380d13U,
+      0x650a7354U, 0x766a0abbU, 0x81c2c92eU, 0x92722c85U, 0xa2bfe8a1U, 0xa81a664bU,
+      0xc24b8b70U, 0xc76c51a3U, 0xd192e819U, 0xd6990624U, 0xf40e3585U, 0x106aa070U,
+      0x19a4c116U, 0x1e376c08U, 0x2748774cU, 0x34b0bcb5U, 0x391c0cb3U, 0x4ed8aa4aU,
+      0x5b9cca4fU, 0x682e6ff3U, 0x748f82eeU, 0x78a5636fU, 0x84c87814U, 0x8cc70208U,
+      0x90befffaU, 0xa4506cebU, 0xbef9a3f7U, 0xc67178f2U};
+
+  static std::uint32_t rotr(std::uint32_t x, std::uint32_t n) {
+    return (x >> n) | (x << (32 - n));
+  }
+
+  static std::uint32_t ch(std::uint32_t x, std::uint32_t y, std::uint32_t z) {
+    return (x & y) ^ (~x & z);
+  }
+
+  static std::uint32_t maj(std::uint32_t x, std::uint32_t y, std::uint32_t z) {
+    return (x & y) ^ (x & z) ^ (y & z);
+  }
+
+  static std::uint32_t bigSigma0(std::uint32_t x) {
+    return rotr(x, 2) ^ rotr(x, 13) ^ rotr(x, 22);
+  }
+
+  static std::uint32_t bigSigma1(std::uint32_t x) {
+    return rotr(x, 6) ^ rotr(x, 11) ^ rotr(x, 25);
+  }
+
+  static std::uint32_t smallSigma0(std::uint32_t x) {
+    return rotr(x, 7) ^ rotr(x, 18) ^ (x >> 3);
+  }
+
+  static std::uint32_t smallSigma1(std::uint32_t x) {
+    return rotr(x, 17) ^ rotr(x, 19) ^ (x >> 10);
+  }
+
+  static std::uint32_t readBe32(const std::uint8_t* p) {
+    return (static_cast<std::uint32_t>(p[0]) << 24) | (static_cast<std::uint32_t>(p[1]) << 16) |
+           (static_cast<std::uint32_t>(p[2]) << 8) | (static_cast<std::uint32_t>(p[3]));
+  }
+
+  void transform(const std::uint8_t* block) {
+    std::array<std::uint32_t, 64> w{};
+    for (int i = 0; i < 16; ++i) {
+      w[static_cast<std::size_t>(i)] = readBe32(block + i * 4);
+    }
+    for (int i = 16; i < 64; ++i) {
+      w[static_cast<std::size_t>(i)] =
+          smallSigma1(w[static_cast<std::size_t>(i - 2)]) + w[static_cast<std::size_t>(i - 7)] +
+          smallSigma0(w[static_cast<std::size_t>(i - 15)]) + w[static_cast<std::size_t>(i - 16)];
+    }
+
+    std::uint32_t a = state_[0];
+    std::uint32_t b = state_[1];
+    std::uint32_t c = state_[2];
+    std::uint32_t d = state_[3];
+    std::uint32_t e = state_[4];
+    std::uint32_t f = state_[5];
+    std::uint32_t g = state_[6];
+    std::uint32_t h = state_[7];
+
+    for (int i = 0; i < 64; ++i) {
+      const std::uint32_t t1 = h + bigSigma1(e) + ch(e, f, g) + K[static_cast<std::size_t>(i)] +
+                               w[static_cast<std::size_t>(i)];
+      const std::uint32_t t2 = bigSigma0(a) + maj(a, b, c);
+      h = g;
+      g = f;
+      f = e;
+      e = d + t1;
+      d = c;
+      c = b;
+      b = a;
+      a = t1 + t2;
+    }
+
+    state_[0] += a;
+    state_[1] += b;
+    state_[2] += c;
+    state_[3] += d;
+    state_[4] += e;
+    state_[5] += f;
+    state_[6] += g;
+    state_[7] += h;
+  }
+
+  std::uint64_t totalLen_ = 0;
+  std::size_t bufferLen_ = 0;
+  std::array<std::uint8_t, 64> buffer_{};
+  std::array<std::uint32_t, 8> state_{};
+};
+
+// Compute SHA-256 of a file and return the lowercase hex digest.
+static std::string sha256FileHex(const std::string& path) {
+  std::ifstream in(path, std::ios::binary);
+  if (!in) throw std::runtime_error("Failed to open file for hashing: " + path);
+
+  Sha256 sha;
+  std::array<std::uint8_t, 1u << 20> buf{}; // 1 MiB
+  while (true) {
+    in.read(reinterpret_cast<char*>(buf.data()), static_cast<std::streamsize>(buf.size()));
+    const std::streamsize got = in.gcount();
+    if (got > 0) {
+      sha.update(buf.data(), static_cast<std::size_t>(got));
+    }
+    if (!in) {
+      if (in.eof()) break;
+      throw std::runtime_error("Error while reading file for hashing: " + path);
+    }
+  }
+
+  return sha.hexdigest();
+}
+
+// Infer the last-used chunkSize from the width metadata file.
+// If the last chunk is smaller (because columnCount isn't a multiple), we still recover the original chunkSize.
+static std::uint32_t inferChunkSizeFromWidths(const std::string& outputDirectory, std::uint64_t columnCount) {
+  const auto path = columnChunkWidthPath(outputDirectory);
+  std::ifstream in(path, std::ios::binary);
+  if (!in) {
+    throw std::runtime_error("Failed to open meta_data/column_chunk_width.bin for inference");
+  }
+
+  in.seekg(0, std::ios::end);
+  const auto sz = static_cast<std::uint64_t>(in.tellg());
+  if (sz == 0) {
+    throw std::runtime_error("column_chunk_width.bin is empty");
+  }
+
+  const std::uint64_t chunkCount = sz; // 1 byte per chunk
+  const std::uint64_t inferred = (columnCount + chunkCount - 1) / chunkCount;
+  if (inferred == 0 || inferred > std::numeric_limits<std::uint32_t>::max()) {
+    throw std::runtime_error("Failed to infer chunkSize from metadata");
+  }
+  return static_cast<std::uint32_t>(inferred);
+}
+
+// Read an unsigned value of bitWidth bits at a given bitOffset from a binary stream.
+// Bits are encoded LSB-first (matching BitWriter::write()).
+static std::uint32_t readBitsAt(std::istream& in, std::uint64_t bitOffset, std::uint8_t bitWidth) {
+  if (bitWidth == 0 || bitWidth > 32) throw std::runtime_error("Invalid bitWidth");
+
+  const std::uint64_t byteOffset = bitOffset / 8ULL;
+  const std::uint8_t startBit = static_cast<std::uint8_t>(bitOffset % 8ULL);
+
+  const std::uint64_t needBits = static_cast<std::uint64_t>(startBit) + bitWidth;
+  const std::uint64_t needBytes = (needBits + 7ULL) / 8ULL;
+
+  std::array<std::uint8_t, 8> bytes{}; // bitWidth<=32 => needBytes<=5
+  if (needBytes > bytes.size()) throw std::runtime_error("Internal error: needBytes too large");
+
   in.clear();
   in.seekg(static_cast<std::streamoff>(byteOffset), std::ios::beg);
   if (!in) throw std::runtime_error("Failed seeking mapped_data chunk file");
 
-  in.read(reinterpret_cast<char*>(buf), static_cast<std::streamsize>(bytesToRead));
-  if (!in) throw std::runtime_error("Failed reading mapped_data chunk file");
-
-  std::uint64_t acc = 0;
-  for (std::uint32_t i = 0; i < bytesToRead; ++i) {
-    acc |= (static_cast<std::uint64_t>(buf[i]) << (8U * i));
+  in.read(reinterpret_cast<char*>(bytes.data()), static_cast<std::streamsize>(needBytes));
+  if (in.gcount() != static_cast<std::streamsize>(needBytes)) {
+    throw std::runtime_error("Failed reading mapped_data chunk file");
   }
 
-  acc >>= bitInByte;
+  std::uint64_t accum = 0;
+  for (std::uint64_t i = 0; i < needBytes; ++i) {
+    accum |= (static_cast<std::uint64_t>(bytes[static_cast<std::size_t>(i)]) << (8ULL * i));
+  }
 
-  const std::uint64_t mask = (bitWidth == 64) ? ~0ULL : ((1ULL << bitWidth) - 1ULL);
-  return static_cast<std::uint32_t>(acc & mask);
+  accum >>= startBit;
+  const std::uint64_t mask = (bitWidth == 32) ? 0xFFFFFFFFULL : ((1ULL << bitWidth) - 1ULL);
+  return static_cast<std::uint32_t>(accum & mask);
 }
 
 } // namespace
@@ -507,6 +816,18 @@ void DataTable::locateRowOffsets(int threads) {
       std::max(minChunkBytes, (fileSize + desiredChunks - 1) / desiredChunks);
   const std::uint64_t chunkCount = (fileSize + chunkBytes - 1) / chunkBytes;
 
+  // Progress: pass-1 is parallel and naturally chunk-based.
+  const int pbLocateRowOffsetsPass1 = progressCreate(
+      chunkCount,
+      "Row offsets (pass 1)",
+      progressbar::ProgressBars::Color::Cyan);
+
+  // Progress: pass-2 is sequential; update at chunk boundaries (not per byte).
+  const int pbLocateRowOffsetsPass2 = progressCreate(
+      chunkCount,
+      "Row offsets (pass 2)",
+      progressbar::ProgressBars::Color::Yellow);
+
   struct ChunkPass1 {
     bool parityAssumingStartOut = false; // quote parity over this chunk with RFC4180 "" handling
     bool pendingQuoteInQuotesAtEndAssumingStartOut = false;
@@ -604,6 +925,8 @@ void DataTable::locateRowOffsets(int threads) {
         const std::uint64_t idx = next.fetch_add(1);
         if (idx >= chunkCount) break;
         chunks[static_cast<std::size_t>(idx)] = scanChunkParity(idx);
+        // Chunk-level progress update (once per completed chunk).
+        progressTick(pbLocateRowOffsetsPass1);
       }
     } catch (...) {
       std::lock_guard<std::mutex> g(eptrMu);
@@ -616,6 +939,8 @@ void DataTable::locateRowOffsets(int threads) {
   for (int t = 0; t < threads; ++t) pool.emplace_back(worker);
   for (auto& th : pool) th.join();
   if (eptr) std::rethrow_exception(eptr);
+
+  progressComplete(pbLocateRowOffsetsPass1);
 
   // Fix up pending "" across chunk boundary: if chunk i ended with pending quote inside quotes
   // and the next chunk begins with a quote, then that next quote should not toggle parity.
@@ -648,6 +973,9 @@ void DataTable::locateRowOffsets(int threads) {
   // NOTE: We must preserve the original single-pass semantics, which are purely sequential.
   // We therefore scan the file from byte 0..fileSize once, but we jump the inQuotes state at
   // chunk boundaries using startInQuotes[].
+
+  // Initialize pass-2 progress at 0 completed chunks.
+  progressSet(pbLocateRowOffsetsPass2, 0);
 
   std::uint64_t rowNumber1Based = 1; // header is row 1
   std::uint64_t commasThisRow = 0;
@@ -684,6 +1012,11 @@ void DataTable::locateRowOffsets(int threads) {
   bool hasCarry = false;
   char carry = '\0';
 
+  // Track how many chunk boundaries we've crossed so far.
+  // Completed chunks in pass-2 is always (currentChunk) while within that chunk,
+  // and (currentChunk+1) right after we advance to the next chunk.
+  std::uint64_t lastReportedCompletedChunks = 0;
+
   auto getNextByteFromStream = [&]() -> std::pair<bool, char> {
     char ch;
     in.read(&ch, 1);
@@ -697,6 +1030,12 @@ void DataTable::locateRowOffsets(int threads) {
       ++currentChunk;
       inQuotes = startInQuotes[static_cast<std::size_t>(currentChunk)];
       nextBoundary = std::min((currentChunk + 1) * chunkBytes, fileSize);
+
+      const std::uint64_t completed = currentChunk;
+      if (completed != lastReportedCompletedChunks) {
+        progressSet(pbLocateRowOffsetsPass2, completed);
+        lastReportedCompletedChunks = completed;
+      }
     }
 
     const std::uint64_t remaining = fileSize - pos;
@@ -789,6 +1128,12 @@ void DataTable::locateRowOffsets(int threads) {
         ++currentChunk;
         inQuotes = startInQuotes[static_cast<std::size_t>(currentChunk)];
         nextBoundary = std::min((currentChunk + 1) * chunkBytes, fileSize);
+
+        const std::uint64_t completed = currentChunk;
+        if (completed != lastReportedCompletedChunks) {
+          progressSet(pbLocateRowOffsetsPass2, completed);
+          lastReportedCompletedChunks = completed;
+        }
       }
 
       const char c = buf[static_cast<std::size_t>(i)];
@@ -870,6 +1215,10 @@ void DataTable::locateRowOffsets(int threads) {
     // The loop above advances pos accordingly; carry will be processed on the next iteration.
   }
 
+  // Ensure pass-2 progress is complete.
+  progressSet(pbLocateRowOffsetsPass2, chunkCount);
+  progressComplete(pbLocateRowOffsetsPass2);
+
   // Handle EOF: if file ended with a newline, last offset points at EOF.
   if (!allOffsets.empty() && allOffsets.back() >= fileSize) {
     allOffsets.pop_back();
@@ -935,6 +1284,65 @@ void DataTable::parse(int threads, std::uint32_t chunkSize) {
     throw std::runtime_error("Output directory is empty");
   }
 
+  // Ensure meta_data directory exists early (we may read hash/counts for a fast-path).
+  const std::filesystem::path metaDir = std::filesystem::path(outputDirectory_) / "meta_data";
+  std::filesystem::create_directories(metaDir);
+
+  // 1) Always compute SHA256 of input (requirement).
+  const std::string computedHash = sha256FileHex(inputFilePath_);
+
+  // 2) If meta_data/hash.txt exists and matches, skip parsing and just load counts/offsets.
+  {
+    const auto hashPath = hashTxtPath(outputDirectory_);
+    if (std::filesystem::exists(hashPath)) {
+      const std::string existingHash = readTextFileTrimmed(hashPath);
+      if (!existingHash.empty() && existingHash == computedHash) {
+        // Load counts first (preferred). Fallback to header_row.bin + row_start_offsets.bin.
+        std::uint64_t rows = 0;
+        std::uint64_t cols = 0;
+        if (tryReadCountsBin(outputDirectory_, rows, cols)) {
+          rowCount_ = rows;
+          columnCount_ = cols;
+        } else {
+          // Column count from header_row.bin
+          {
+            std::ifstream hin(headerRowBinPath(outputDirectory_), std::ios::binary);
+            if (!hin) throw std::runtime_error("hash matched but header_row.bin missing");
+            columnCount_ = readU64(hin);
+          }
+          // Row count from row_start_offsets.bin size
+          {
+            const auto roPath = rowOffsetsBinPath(outputDirectory_);
+            const std::uint64_t sz = static_cast<std::uint64_t>(std::filesystem::file_size(roPath));
+            if (sz % sizeof(std::uint64_t) != 0) throw std::runtime_error("Corrupt row_start_offsets.bin");
+            rowCount_ = sz / sizeof(std::uint64_t);
+          }
+        }
+
+        // Load row offsets into memory for getters and getValue/lookupMap.
+        {
+          const auto roPath = rowOffsetsBinPath(outputDirectory_);
+          std::ifstream rin(roPath, std::ios::binary);
+          if (!rin) throw std::runtime_error("hash matched but row_start_offsets.bin missing");
+          rowOffsets_ = std::make_unique<std::uint64_t[]>(static_cast<std::size_t>(rowCount_));
+          rin.read(reinterpret_cast<char*>(rowOffsets_.get()),
+                   static_cast<std::streamsize>(rowCount_ * sizeof(std::uint64_t)));
+          if (!rin) throw std::runtime_error("Failed reading row_start_offsets.bin");
+        }
+
+        // Also set up currentRowOffsets_ so parseChunks-related methods that might rely on it later are safe.
+        currentRowOffsets_ = std::make_unique<std::uint64_t[]>(static_cast<std::size_t>(rowCount_));
+        for (std::uint64_t r = 0; r < rowCount_; ++r) {
+          currentRowOffsets_[static_cast<std::size_t>(r)] = rowOffsets_[static_cast<std::size_t>(r)];
+        }
+
+        parseCompleted_ = true;
+        return;
+      }
+    }
+  }
+
+  // Normal parse path (hash mismatch or no prior hash).
   std::ifstream in(inputFilePath_, std::ios::binary);
   if (!in) {
     throw std::runtime_error("Failed to open input CSV: " + inputFilePath_);
@@ -942,9 +1350,6 @@ void DataTable::parse(int threads, std::uint32_t chunkSize) {
 
   const std::vector<std::string> headers = parseHeaderRow(in);
   const std::uint64_t ncols = static_cast<std::uint64_t>(headers.size());
-
-  const std::filesystem::path metaDir = std::filesystem::path(outputDirectory_) / "meta_data";
-  std::filesystem::create_directories(metaDir);
 
   const std::filesystem::path headerPath = metaDir / "header_row.bin";
   {
@@ -972,6 +1377,9 @@ void DataTable::parse(int threads, std::uint32_t chunkSize) {
   // Locate row offsets and validate per-row column counts in the same pass.
   locateRowOffsets(threads);
 
+  // As soon as both counts are known, write counts.bin.
+  writeCountsBin(outputDirectory_, rowCount_, columnCount_);
+
   // Initialize per-row cursors for chunk parsing.
   currentRowOffsets_ = std::make_unique<std::uint64_t[]>(static_cast<std::size_t>(rowCount_));
   for (std::uint64_t r = 0; r < rowCount_; ++r) {
@@ -988,6 +1396,81 @@ void DataTable::parse(int threads, std::uint32_t chunkSize) {
 
   // Chunk parsing and mapped output.
   parseChunks(threads);
+
+  // Write/update hash.txt last, after a successful parse.
+  writeTextFile(hashTxtPath(outputDirectory_), computedHash + "\n");
+
+  parseCompleted_ = true;
+}
+
+void DataTable::load(const std::string& directory) {
+  // Reset state.
+  inputFilePath_.clear();
+  outputDirectory_ = directory;
+  parseCompleted_ = false;
+  columnCount_ = 0;
+  rowCount_ = 0;
+  rowOffsets_.reset();
+  currentRowOffsets_.reset();
+
+  if (outputDirectory_.empty()) {
+    throw std::runtime_error("Output directory is empty");
+  }
+
+  const std::filesystem::path outDir(outputDirectory_);
+  const std::filesystem::path metaDir = outDir / "meta_data";
+  const std::filesystem::path mappedDir = outDir / "mapped_data";
+
+  if (!std::filesystem::exists(metaDir)) {
+    throw std::runtime_error("Missing meta_data directory: " + metaDir.string());
+  }
+  if (!std::filesystem::exists(mappedDir)) {
+    throw std::runtime_error("Missing mapped_data directory: " + mappedDir.string());
+  }
+
+  // 1) Read counts.bin (rows, cols).
+  {
+    std::uint64_t rows = 0;
+    std::uint64_t cols = 0;
+    if (!tryReadCountsBin(outputDirectory_, rows, cols)) {
+      throw std::runtime_error("Failed to read meta_data/counts.bin");
+    }
+    if (rows == 0) throw std::runtime_error("Invalid counts.bin: rowCount is 0");
+    if (cols == 0) throw std::runtime_error("Invalid counts.bin: columnCount is 0");
+    rowCount_ = rows;
+    columnCount_ = cols;
+  }
+
+  // 2) Load row offsets into memory.
+  {
+    const auto roPath = rowOffsetsBinPath(outputDirectory_);
+    if (!std::filesystem::exists(roPath)) {
+      throw std::runtime_error("Missing meta_data/row_start_offsets.bin");
+    }
+
+    const std::uint64_t sz = static_cast<std::uint64_t>(std::filesystem::file_size(roPath));
+    const std::uint64_t expected = rowCount_ * static_cast<std::uint64_t>(sizeof(std::uint64_t));
+    if (sz != expected) {
+      throw std::runtime_error("row_start_offsets.bin size does not match rowCount from counts.bin");
+    }
+
+    std::ifstream rin(roPath, std::ios::binary);
+    if (!rin) throw std::runtime_error("Failed to open meta_data/row_start_offsets.bin");
+
+    rowOffsets_ = std::make_unique<std::uint64_t[]>(static_cast<std::size_t>(rowCount_));
+    rin.read(reinterpret_cast<char*>(rowOffsets_.get()),
+             static_cast<std::streamsize>(rowCount_ * sizeof(std::uint64_t)));
+    if (!rin) throw std::runtime_error("Failed reading meta_data/row_start_offsets.bin");
+  }
+
+  // 3) Infer chunkSize_ from the widths file so lookup/getValue can locate the right chunk.
+  chunkSize_ = inferChunkSizeFromWidths(outputDirectory_, columnCount_);
+
+  // 4) Initialize per-row cursors.
+  currentRowOffsets_ = std::make_unique<std::uint64_t[]>(static_cast<std::size_t>(rowCount_));
+  for (std::uint64_t r = 0; r < rowCount_; ++r) {
+    currentRowOffsets_[static_cast<std::size_t>(r)] = rowOffsets_[static_cast<std::size_t>(r)];
+  }
 
   parseCompleted_ = true;
 }
@@ -1137,6 +1620,12 @@ void DataTable::parseChunks(int /*threads*/) {
       (columnCount_ + static_cast<std::uint64_t>(chunkSize_) - 1) /
       static_cast<std::uint64_t>(chunkSize_);
 
+  const int pbColumnChunks = progressCreate(
+      totalChunks,
+      "Column chunks",
+      progressbar::ProgressBars::Color::Green);
+  progressSet(pbColumnChunks, 0);
+
   std::ofstream widthOut(columnChunkWidthPath(outputDirectory_), std::ios::binary | std::ios::trunc);
   if (!widthOut) throw std::runtime_error("Failed to open meta_data/column_chunk_width.bin");
 
@@ -1260,7 +1749,12 @@ void DataTable::parseChunks(int /*threads*/) {
     }
 
     bw.flush();
+
+    // Progress update: one tick per completed column chunk.
+    progressTick(pbColumnChunks);
   }
+
+  progressComplete(pbColumnChunks);
 
   widthOut.flush();
   if (!widthOut) throw std::runtime_error("Failed flushing meta_data/column_chunk_width.bin");

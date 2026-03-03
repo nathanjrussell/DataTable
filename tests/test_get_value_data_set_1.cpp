@@ -18,7 +18,7 @@ static fs::path repoRoot() {
 }
 
 TEST(DataSet1, GetValue_MatchesEveryCell) {
-  const fs::path csvPath = repoRoot() / "tests" / "test_data_sets" / "data_set_1.csv";
+  const fs::path csvPath = repoRoot() / "tests" / "test_data_sets" / "small_fake_datasets"/ "data_set_1.csv";
   const fs::path outDir  = repoRoot() / "tests" / "test_data_sets" / "data_output" / "data_set_1_out";
 
   ASSERT_TRUE(fs::exists(csvPath)) << "CSV not found at: " << csvPath;

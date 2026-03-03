@@ -1,13 +1,19 @@
 cmake_minimum_required(VERSION 3.20)
 project(DataTable VERSION 0.1.0 LANGUAGES CXX)
 
+# Ensure Release uses -O3 (GCC/Clang). Keep MSVC defaults.
+if(NOT MSVC)
+  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG" CACHE STRING "" FORCE)
+  set(CMAKE_C_FLAGS_RELEASE   "-O3 -DNDEBUG" CACHE STRING "" FORCE)
+endif()
+
 include(FetchContent)
 
 option(DATATABLE_BUILD_TESTS "Build DataTable unit tests" ON)
 option(DATATABLE_BUILD_EXAMPLES "Build DataTable example executables" ON)
 
 # ProgressBar-CPP integration (default OFF in this project)
-option(DATATABLE_ENABLE_PROGRESSBAR "Enable ProgressBar-CPP integration" OFF)
+option(DATATABLE_ENABLE_PROGRESSBAR "Enable ProgressBar-CPP integration" ON)
 
 FetchContent_Declare(
         nlohmann_json

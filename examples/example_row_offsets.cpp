@@ -7,19 +7,24 @@
 using DataTableLib::DataTable;
 
 int main() {
-  // Hard-coded paths for a simple visual spot-check.
-  // Update this path to point to your generated CSV if needed.
+
+  std::string folderName = "small_fake_datasets";
+  std::string dataSetName = "data_set_1";
+  std::string fileName = dataSetName + ".csv";
+
   const std::filesystem::path csvPath =
-      std::filesystem::path("tests") / "test_data_sets" / "large_datasets"/ "test_dataset_60k_20k.csv";
+      std::filesystem::path("tests") / "test_data_sets" / folderName / fileName;
   // Output directory is only used for meta_data/.
-  const std::filesystem::path outDir = std::filesystem::path("tests") / "test_data_sets" / "data_output" / "large_dataset_60k_20k";
+  const std::filesystem::path outDir = std::filesystem::path("tests") / "test_data_sets" / "data_output" / dataSetName;
 
   const int threads = 10;
 
   DataTable dt(csvPath.string(), outDir.string());
   dt.parse(threads);
-  int rowCount = static_cast<int>(dt.getRowCount());
-  int colCount = static_cast<int>(dt.getColumnCount());
+  DataTable dt2;
+  dt2.load(outDir.string());
+  int rowCount = static_cast<int>(dt2.getRowCount());
+  int colCount = static_cast<int>(dt2.getColumnCount());
   std::cout << "Row count: " << rowCount << "\n";
   std::cout << "Column count: " << colCount << "\n";
 

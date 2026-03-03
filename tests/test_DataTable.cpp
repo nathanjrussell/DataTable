@@ -153,6 +153,46 @@ TEST(DataTable, Parse_WritesHeaderRowBin_AndGettersReadItBack) {
   EXPECT_THROW(dt.getRowOffset(3), std::out_of_range);
 }
 
+TEST(DataTable, Load_ReusesParsedDirectory_MetadataAndGetValueWork) {
+  const auto outDir = makeTempDir("load_basic");
+  const auto csvPath = outDir / "in.csv";
+
+  writeTextFile(csvPath, "A,B,C\n1,2,3\n4,,6\n");
+
+  // Parse into outDir.
+  {
+    DataTable dt(csvPath.string(), outDir.string());
+    dt.parse(/*threads=*/1, /*chunkSize=*/2);
+    ASSERT_TRUE(dt.parseCompleted());
+    ASSERT_EQ(dt.getRowCount(), 3u);
+    ASSERT_EQ(dt.getColumnCount(), 3u);
+    ASSERT_EQ(dt.getValue(1, 0), "1");
+    ASSERT_EQ(dt.getValue(2, 1), "");
+  }
+
+  // Now load from disk without parsing.
+  DataTable loaded;
+  loaded.load(outDir.string());
+
+  ASSERT_TRUE(loaded.parseCompleted());
+  EXPECT_EQ(loaded.outputDirectory(), outDir.string());
+
+  EXPECT_EQ(loaded.getRowCount(), 3u);
+  EXPECT_EQ(loaded.getColumnCount(), 3u);
+
+  EXPECT_EQ(loaded.getColumnHeader(0), "A");
+  EXPECT_EQ(loaded.getColumnHeader(1), "B");
+  EXPECT_EQ(loaded.getColumnHeader(2), "C");
+
+  EXPECT_EQ(loaded.getValue(1, 0), "1");
+  EXPECT_EQ(loaded.getValue(1, 1), "2");
+  EXPECT_EQ(loaded.getValue(1, 2), "3");
+
+  EXPECT_EQ(loaded.getValue(2, 0), "4");
+  EXPECT_EQ(loaded.getValue(2, 1), "");
+  EXPECT_EQ(loaded.getValue(2, 2), "6");
+}
+
 TEST(DataTable, Parse_PreservesWhitespaceInsideQuotes) {
   const auto outDir = makeTempDir("quotes_whitespace");
   const auto csvPath = outDir / "in.csv";
