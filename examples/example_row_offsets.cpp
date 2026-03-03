@@ -23,6 +23,7 @@ int main() {
   std::cout << "Row count: " << rowCount << "\n";
   std::cout << "Column count: " << colCount << "\n";
 
+/*
   // Hard-coded rows to print (row 0 is the header).
   const std::uint64_t rowsToPrint[] = {0, 1, 2, 3, 4, 10, 100, 1000, 5834};
 
@@ -43,7 +44,7 @@ int main() {
             std::cout << "Value for row " << row << ", col " << col << ": " << dt.getValue(row, col) << "\n";
         }
     }
-
+*/
 
 
   return 0;
