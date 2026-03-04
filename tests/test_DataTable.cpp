@@ -114,7 +114,7 @@ TEST(DataTable, MetadataAccess_ThrowsBeforeParse) {
   EXPECT_THROW(dt.getColumnHeader(0), std::runtime_error);
   EXPECT_THROW(dt.getColumnHeaderJson(), std::runtime_error);
   EXPECT_THROW(dt.getRowCount(), std::runtime_error);
-  EXPECT_THROW(dt.getRowOffset(0), std::runtime_error);
+
 }
 
 TEST(DataTable, GetColumnIndex_By_String) {
@@ -164,12 +164,6 @@ TEST(DataTable, Parse_WritesHeaderRowBin_AndGettersReadItBack) {
 
   // Row 0 is header, rows 1.. are data.
   EXPECT_EQ(dt.getRowCount(), 3u);
-  EXPECT_EQ(dt.getRowOffset(0), 0u);
-  EXPECT_LT(dt.getRowOffset(0), dt.getRowOffset(1));
-  EXPECT_LT(dt.getRowOffset(1), dt.getRowOffset(2));
-
-  EXPECT_THROW(dt.getRowOffset(-1), std::out_of_range);
-  EXPECT_THROW(dt.getRowOffset(3), std::out_of_range);
 }
 
 TEST(DataTable, Load_ReusesParsedDirectory_MetadataAndGetValueWork) {
@@ -262,35 +256,7 @@ TEST(DataTable, Parse_HeaderLongerThan255BytesThrows) {
   EXPECT_THROW(dt.parse(1), std::runtime_error);
 }
 
-TEST(DataTable, Parse_RowOffsetsPredictable_UnevenRowsWithQuotesNewlines_Threads1To10) {
-  const auto outDir = makeTempDir("uneven_rows_quotes_newlines");
 
-  // Keep test runtime reasonable but still non-trivial.
-  const std::uint64_t targetBytes = 2ull * 1024ull * 1024ull;
-  const auto gen = generateUnevenCsvWithQuotesNewlines(outDir, targetBytes);
-
-  ASSERT_FALSE(gen.offsets.empty());
-
-  // Expected offsets now include the header row at offset 0.
-  std::vector<std::uint64_t> expectedOffsets;
-  expectedOffsets.reserve(gen.offsets.size() + 1);
-  expectedOffsets.push_back(0);
-  expectedOffsets.insert(expectedOffsets.end(), gen.offsets.begin(), gen.offsets.end());
-
-  for (int threads = 1; threads <= 10; threads+=2) {
-    DataTable dt(gen.csvPath.string(), outDir.string());
-    dt.parse(threads);
-
-    ASSERT_TRUE(dt.parseCompleted());
-    ASSERT_EQ(dt.getColumnCount(), 2u);
-    ASSERT_EQ(dt.getRowCount(), static_cast<std::uint64_t>(expectedOffsets.size()));
-
-    for (std::uint64_t r = 0; r < dt.getRowCount(); ++r) {
-      ASSERT_EQ(dt.getRowOffset(static_cast<int>(r)), expectedOffsets[static_cast<std::size_t>(r)])
-          << "threads=" << threads << " row=" << r;
-    }
-  }
-}
 
 TEST(DataTable, Parse_ThrowsWhenRowHasMissingColumn_Threads1) {
   const auto outDir = makeTempDir("missing_col_threads1");
@@ -443,5 +409,48 @@ TEST(DataTable, BitPacking_LookupMap_CrossesByteBoundaries) {
       ASSERT_EQ(v1, want) << "row=" << row;
       ASSERT_EQ(v2, want) << "row=" << row;
     }
+  }
+}
+
+TEST(DataTable, Parse_WritesRowStartOffsetsBin_MatchesExpected_UnevenQuotedNewlines) {
+  const auto outDir = makeTempDir("row_offsets_bin");
+
+  // Generate a CSV with tricky quoted newlines so offsets are a meaningful correctness check.
+  const auto gen = generateUnevenCsvWithQuotesNewlines(outDir, /*approxTargetBytes=*/256 * 1024);
+
+  DataTable dt(gen.csvPath.string(), outDir.string());
+  dt.parse(/*threads=*/4, /*chunkSize=*/2);
+  ASSERT_TRUE(dt.parseCompleted());
+
+  // Read the row offsets bin file directly.
+  const auto offsetsPath = outDir / "meta_data" / "row_start_offsets.bin";
+  ASSERT_TRUE(std::filesystem::exists(offsetsPath)) << offsetsPath;
+
+  std::ifstream in(offsetsPath, std::ios::binary);
+  ASSERT_TRUE(static_cast<bool>(in));
+
+  // The file stores offsets for all rows including row 0 header.
+  // Our generator recorded offsets for each *data row* (not including the header).
+  const std::uint64_t expectedRowCount = 1u + static_cast<std::uint64_t>(gen.offsets.size());
+
+  std::vector<std::uint64_t> got;
+  got.resize(static_cast<std::size_t>(expectedRowCount));
+  in.read(reinterpret_cast<char*>(got.data()), static_cast<std::streamsize>(got.size() * sizeof(std::uint64_t)));
+  ASSERT_TRUE(static_cast<bool>(in));
+
+  // Ensure there's no trailing extra data.
+  std::uint64_t extra = 0;
+  in.read(reinterpret_cast<char*>(&extra), sizeof(extra));
+  ASSERT_FALSE(in.good()) << "row_start_offsets.bin has unexpected trailing bytes";
+
+  ASSERT_EQ(dt.getRowCount(), expectedRowCount);
+
+  // Header row always starts at 0.
+  EXPECT_EQ(got[0], 0u);
+
+  for (std::size_t i = 0; i < gen.offsets.size(); ++i) {
+    const std::uint64_t want = gen.offsets[i];
+    const std::uint64_t have = got[i + 1];
+    ASSERT_EQ(have, want) << "dataRow=" << (i + 1);
   }
 }

@@ -91,16 +91,10 @@ TEST(DataTable, Parse_RowOffsets_FromPythonIndex_Threads1To10) {
     dt.parse(threads);
 
     ASSERT_TRUE(dt.parseCompleted());
+    ASSERT_EQ(dt.getColumnCount(), 40u);
     ASSERT_EQ(dt.getRowCount(), static_cast<std::uint64_t>(expectedOffsets.size()));
 
-    const std::uint64_t last = dt.getRowCount() - 1;
-    const std::uint64_t mid = dt.getRowCount() / 2;
-
-    ASSERT_EQ(dt.getRowOffset(0), expectedOffsets[0]) << "threads=" << threads;
-    ASSERT_EQ(dt.getRowOffset(static_cast<int>(mid)), expectedOffsets[static_cast<std::size_t>(mid)])
-        << "threads=" << threads;
-    ASSERT_EQ(dt.getRowOffset(static_cast<int>(last)), expectedOffsets[static_cast<std::size_t>(last)])
-        << "threads=" << threads;
+    // Row offsets are still written to disk, but are no longer part of the public API.
   }
 
   std::filesystem::remove_all(outDir, ec);

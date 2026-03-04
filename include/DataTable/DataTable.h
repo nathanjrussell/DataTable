@@ -34,11 +34,9 @@ public:
   std::uint64_t getColumnIndex(const std::string& header) const;
   std::string getColumnHeaderJson() const;
 
-  // Row offsets are byte offsets into the original CSV file.
-  // Row 0 is the header row, row 1 is the first data row.
+  // Row numbering: row 0 is the header row, row 1 is the first data row.
   // getRowCount() includes the header row.
   std::uint64_t getRowCount() const;
-  std::uint64_t getRowOffset(int row) const;
 
   // Return the mapped integer id for a given cell by reading the persisted, bit-packed mapped_data.
   // Row 0 is the header and is not supported.
@@ -65,6 +63,9 @@ private:
   void ensureParsed() const;
   void locateRowOffsets(int threads);
   void parseChunks(int threads);
+
+  // Internal helper: retrieve a row start offset (from memory during parse, or from disk if needed).
+  std::uint64_t rowOffset(std::uint64_t row) const;
 
   std::string inputFilePath_;
   std::string outputDirectory_;

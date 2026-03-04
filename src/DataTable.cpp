@@ -1203,11 +1203,27 @@ std::uint64_t DataTable::getRowCount() const {
   return rowCount_;
 }
 
-std::uint64_t DataTable::getRowOffset(int row) const {
+std::uint64_t DataTable::rowOffset(std::uint64_t row) const {
   ensureParsed();
-  if (row < 0) throw std::out_of_range("row must be >= 0");
-  if (static_cast<std::uint64_t>(row) >= rowCount_) throw std::out_of_range("row out of range");
-  return rowOffsets_[static_cast<std::size_t>(row)];
+  if (row >= rowCount_) throw std::out_of_range("row out of range");
+
+  if (rowOffsets_) {
+    return rowOffsets_[static_cast<std::size_t>(row)];
+  }
+
+  // Bin-only mode: offsets are on disk. Read just the requested element.
+  const auto path = rowOffsetsBinPath(outputDirectory_);
+  std::ifstream in(path, std::ios::binary);
+  if (!in) throw std::runtime_error("Failed to open row_start_offsets.bin");
+
+  const std::uint64_t pos = row * static_cast<std::uint64_t>(sizeof(std::uint64_t));
+  in.seekg(static_cast<std::streamoff>(pos), std::ios::beg);
+  if (!in) throw std::runtime_error("Failed seeking row_start_offsets.bin");
+
+  std::uint64_t v = 0;
+  in.read(reinterpret_cast<char*>(&v), sizeof(v));
+  if (!in) throw std::runtime_error("Failed reading row_start_offsets.bin");
+  return v;
 }
 
 void DataTable::parse(int threads) {
@@ -1271,22 +1287,9 @@ void DataTable::parse(int threads, std::uint32_t chunkSize) {
           }
         }
 
-        // Load row offsets into memory for getters and getValue/lookupMap.
-        {
-          const auto roPath = rowOffsetsBinPath(outputDirectory_);
-          std::ifstream rin(roPath, std::ios::binary);
-          if (!rin) throw std::runtime_error("hash matched but row_start_offsets.bin missing");
-          rowOffsets_ = std::make_unique<std::uint64_t[]>(static_cast<std::size_t>(rowCount_));
-          rin.read(reinterpret_cast<char*>(rowOffsets_.get()),
-                   static_cast<std::streamsize>(rowCount_ * sizeof(std::uint64_t)));
-          if (!rin) throw std::runtime_error("Failed reading row_start_offsets.bin");
-        }
-
-        // Also set up currentRowOffsets_ so parseChunks-related methods that might rely on it later are safe.
-        currentRowOffsets_ = std::make_unique<std::uint64_t[]>(static_cast<std::size_t>(rowCount_));
-        for (std::uint64_t r = 0; r < rowCount_; ++r) {
-          currentRowOffsets_[static_cast<std::size_t>(r)] = rowOffsets_[static_cast<std::size_t>(r)];
-        }
+        // Bin-only fast-path: do NOT load row offsets into memory.
+        rowOffsets_.reset();
+        currentRowOffsets_.reset();
 
         parseCompleted_ = true;
         return;
@@ -1333,11 +1336,8 @@ void DataTable::parse(int threads, std::uint32_t chunkSize) {
   // As soon as both counts are known, write counts.bin.
   writeCountsBin(outputDirectory_, rowCount_, columnCount_);
 
-  // Initialize per-row cursors for chunk parsing.
-  currentRowOffsets_ = std::make_unique<std::uint64_t[]>(static_cast<std::size_t>(rowCount_));
-  for (std::uint64_t r = 0; r < rowCount_; ++r) {
-    currentRowOffsets_[static_cast<std::size_t>(r)] = rowOffsets_[static_cast<std::size_t>(r)];
-  }
+  // currentRowOffsets_ is no longer needed beyond parse-time.
+  currentRowOffsets_.reset();
 
   // Prepare mapped_data outputs.
   std::filesystem::create_directories(mappedDataDirPath(outputDirectory_));
@@ -1347,13 +1347,24 @@ void DataTable::parse(int threads, std::uint32_t chunkSize) {
     if (!widths) throw std::runtime_error("Failed to create meta_data/column_chunk_width.bin");
   }
 
-  // Chunk parsing and mapped output.
-  parseChunks(threads);
+  // parseChunks() uses internal helpers that call ensureParsed().
+  // We flip this on for the duration of chunk parsing.
+  parseCompleted_ = true;
+  try {
+    // Chunk parsing and mapped output.
+    parseChunks(threads);
+  } catch (...) {
+    parseCompleted_ = false;
+    throw;
+  }
+
+  // Free row offsets after chunk parsing is complete.
+  rowOffsets_.reset();
 
   // Write/update hash.txt last, after a successful parse.
   writeTextFile(hashTxtPath(outputDirectory_), computedHash + "\n");
 
-  parseCompleted_ = true;
+  // parseCompleted_ stays true.
 }
 
 void DataTable::load(const std::string& directory) {
@@ -1394,36 +1405,13 @@ void DataTable::load(const std::string& directory) {
     columnCount_ = cols;
   }
 
-  // 2) Load row offsets into memory.
-  {
-    const auto roPath = rowOffsetsBinPath(outputDirectory_);
-    if (!std::filesystem::exists(roPath)) {
-      throw std::runtime_error("Missing meta_data/row_start_offsets.bin");
-    }
-
-    const std::uint64_t sz = static_cast<std::uint64_t>(std::filesystem::file_size(roPath));
-    const std::uint64_t expected = rowCount_ * static_cast<std::uint64_t>(sizeof(std::uint64_t));
-    if (sz != expected) {
-      throw std::runtime_error("row_start_offsets.bin size does not match rowCount from counts.bin");
-    }
-
-    std::ifstream rin(roPath, std::ios::binary);
-    if (!rin) throw std::runtime_error("Failed to open meta_data/row_start_offsets.bin");
-
-    rowOffsets_ = std::make_unique<std::uint64_t[]>(static_cast<std::size_t>(rowCount_));
-    rin.read(reinterpret_cast<char*>(rowOffsets_.get()),
-             static_cast<std::streamsize>(rowCount_ * sizeof(std::uint64_t)));
-    if (!rin) throw std::runtime_error("Failed reading meta_data/row_start_offsets.bin");
-  }
+  // 2) Bin-only load: do NOT load row offsets.
+  rowOffsets_.reset();
+  currentRowOffsets_.reset();
 
   // 3) Infer chunkSize_ from the widths file so lookup/getValue can locate the right chunk.
   chunkSize_ = inferChunkSizeFromWidths(outputDirectory_, columnCount_);
 
-  // 4) Initialize per-row cursors.
-  currentRowOffsets_ = std::make_unique<std::uint64_t[]>(static_cast<std::size_t>(rowCount_));
-  for (std::uint64_t r = 0; r < rowCount_; ++r) {
-    currentRowOffsets_[static_cast<std::size_t>(r)] = rowOffsets_[static_cast<std::size_t>(r)];
-  }
 
   parseCompleted_ = true;
 }
@@ -1746,7 +1734,7 @@ void DataTable::parseChunks(int /*threads*/) {
 
     for (std::uint64_t dataRow = 0; dataRow < dataRowCount; ++dataRow) {
       const std::uint64_t csvRow = dataRow + 1;
-      const std::uint64_t rowStart = rowOffsets_[static_cast<std::size_t>(csvRow)];
+      const std::uint64_t rowStart = rowOffset(csvRow);
 
       std::ifstream in(inputFilePath_, std::ios::binary);
       if (!in) throw std::runtime_error("Failed to open input CSV during chunk parse");

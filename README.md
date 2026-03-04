@@ -28,7 +28,7 @@ A C++ library for parsing RFC4180-style CSV files into a compact, on-disk, **col
 - [Public API](#public-api)
   - [Lifecycle (`parse`, `load`)](#lifecycle-parse-load)
   - [Header access](#header-access)
-  - [Row offsets](#row-offsets)
+  - [Row counts](#row-counts)
   - [Mapped value lookup](#mapped-value-lookup)
   - [Column dictionaries](#column-dictionaries)
 - [Examples](#examples)
@@ -259,15 +259,17 @@ The primary public class is `DataTableLib::DataTable`.
 - `std::uint64_t getColumnIndex(const std::string& header) const`
 - `std::string getColumnHeaderJson() const`
 
-### Row offsets
+### Row counts
 
 - `std::uint64_t getRowCount() const`
-- `std::uint64_t getRowOffset(int row) const`
 
-Row indexing:
+Row indexing semantics:
 
 - `row = 0` is the header row
 - `row >= 1` are data rows
+
+This library still writes `meta_data/row_start_offsets.bin` as internal metadata (used for parsing correctness and tooling),
+but row offsets are intentionally **not part of the public API**.
 
 ### Mapped value lookup
 
