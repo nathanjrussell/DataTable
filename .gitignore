@@ -1,3 +1,16 @@
-build/
 tests/test_data_sets/data_output
 tests/test_data_sets/large_fake_datasets
+
+# CMake build directories
+/build/
+/build-*/
+/cmake-build-*/
+
+# CLion / JetBrains
+/.idea/
+
+# CMake + FetchContent generated
+CMakeCache.txt
+CMakeFiles/
+Testing/
+_deps/

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(DataTable VERSION 0.1.0 LANGUAGES CXX)
+project(DataTable VERSION 1.1.0 LANGUAGES CXX)
 
 # Ensure Release uses -O3 (GCC/Clang). Keep MSVC defaults.
 if(NOT MSVC)
@@ -34,7 +34,7 @@ FetchContent_MakeAvailable(ProgressBar)
 # HashLibrary integration
 FetchContent_Declare(
         HashLibrary
-        GIT_REPOSITORY git@github.com:nathanjrussell/HashLibrary.git
+        GIT_REPOSITORY https://github.com/nathanjrussell/HashLibrary.git
         GIT_TAG v1.2.0
 )
 FetchContent_MakeAvailable(HashLibrary)
