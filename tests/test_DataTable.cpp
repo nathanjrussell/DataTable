@@ -117,6 +117,21 @@ TEST(DataTable, MetadataAccess_ThrowsBeforeParse) {
   EXPECT_THROW(dt.getRowOffset(0), std::runtime_error);
 }
 
+TEST(DataTable, GetColumnIndex_By_String) {
+  const auto outDir = makeTempDir("get_column_index");
+  const auto csvPath = outDir / "in.csv";
+
+  writeTextFile(csvPath, "A,B,C\n1,2,3\n");
+
+  DataTable dt(csvPath.string(), outDir.string());
+  dt.parse(1);
+
+  EXPECT_EQ(dt.getColumnIndex("A"), 0u);
+  EXPECT_EQ(dt.getColumnIndex("B"), 1u);
+  EXPECT_EQ(dt.getColumnIndex("C"), 2u);
+  EXPECT_THROW(dt.getColumnIndex("Nonexistent"), std::out_of_range);
+}
+
 TEST(DataTable, Parse_WritesHeaderRowBin_AndGettersReadItBack) {
   const auto outDir = makeTempDir("basic");
   const auto csvPath = outDir / "in.csv";
@@ -135,6 +150,10 @@ TEST(DataTable, Parse_WritesHeaderRowBin_AndGettersReadItBack) {
   EXPECT_EQ(dt.getColumnHeader(0), "Name");
   EXPECT_EQ(dt.getColumnHeader(1), "Age");
   EXPECT_EQ(dt.getColumnHeader(2), "City");
+  EXPECT_EQ(dt.getColumnIndex("Name"), 0u);
+  EXPECT_EQ(dt.getColumnIndex("Age"), 1u);
+  EXPECT_EQ(dt.getColumnIndex("City"), 2u);
+  EXPECT_THROW(dt.getColumnIndex("Nonexistent"), std::out_of_range);
 
   const auto j = nlohmann::json::parse(dt.getColumnHeaderJson());
   ASSERT_TRUE(j.is_array());
@@ -294,4 +313,86 @@ TEST(DataTable, Parse_ThrowsWhenRowHasMissingColumn_Threads2To5) {
     DataTable dt(csvPath.string(), outDir.string());
     EXPECT_THROW(dt.parse(threads), std::runtime_error) << "threads=" << threads;
   }
+}
+
+TEST(DataTable, Parse_DuplicateHeadersThrows) {
+  const auto outDir = makeTempDir("dup_headers");
+  const auto csvPath = outDir / "in.csv";
+
+  writeTextFile(csvPath, "A,B,A\n1,2,3\n");
+
+  DataTable dt(csvPath.string(), outDir.string());
+  EXPECT_THROW(dt.parse(1), std::runtime_error);
+}
+
+TEST(DataTable, Parse_InvalidUtf8InHeaderThrows) {
+  const auto outDir = makeTempDir("bad_utf8_header");
+  const auto csvPath = outDir / "in.csv";
+
+  // Write an invalid UTF-8 byte sequence in the header: 0xC3 0x28 is invalid.
+  std::string badHeader;
+  badHeader.push_back('A');
+  badHeader.push_back(',');
+  badHeader.push_back(static_cast<char>(0xC3));
+  badHeader.push_back(static_cast<char>(0x28));
+  badHeader += ",C\n1,2,3\n";
+
+  writeTextFile(csvPath, badHeader);
+
+  DataTable dt(csvPath.string(), outDir.string());
+  EXPECT_THROW(dt.parse(1), std::runtime_error);
+}
+
+TEST(DataTable, ColumnDictionary_GetColumnValue_And_GetFeatureCount) {
+  const auto outDir = makeTempDir("column_dictionary");
+  const auto csvPath = outDir / "in.csv";
+
+  // 2 columns, 3 data rows.
+  // Column A distinct values: "x", "y" => maxId=2 (id 0 is empty sentinel)
+  // Column B distinct values: "u", "v" => maxId=2
+  writeTextFile(csvPath, "A,B\n"
+                        "x,u\n"
+                        "y,v\n"
+                        "x,u\n");
+
+  DataTable dt(csvPath.string(), outDir.string());
+  dt.parse(/*threads=*/1, /*chunkSize=*/1); // force separate chunks per column
+
+  ASSERT_TRUE(dt.parseCompleted());
+  ASSERT_EQ(dt.getColumnCount(), 2u);
+  ASSERT_EQ(dt.getRowCount(), 4u);
+
+  // Grab actual feature ids from persisted mapped_data.
+  const std::uint32_t idAx = dt.lookupMap(/*row=*/1, /*col=*/0);
+  const std::uint32_t idAy = dt.lookupMap(/*row=*/2, /*col=*/0);
+  const std::uint32_t idBu = dt.lookupMap(/*row=*/1, /*col=*/1);
+  const std::uint32_t idBv = dt.lookupMap(/*row=*/2, /*col=*/1);
+
+  // Ensure ids are sequential per column (order depends on first occurrence).
+  EXPECT_NE(idAx, 0u);
+  EXPECT_NE(idAy, 0u);
+  EXPECT_NE(idBu, 0u);
+  EXPECT_NE(idBv, 0u);
+  EXPECT_NE(idAx, idAy);
+  EXPECT_NE(idBu, idBv);
+
+  // getColumnValue resolves the per-column dictionary id.
+  EXPECT_EQ(dt.getColumnValue(0, idAx), "x");
+  EXPECT_EQ(dt.getColumnValue(0, idAy), "y");
+  EXPECT_EQ(dt.getColumnValue(1, idBu), "u");
+  EXPECT_EQ(dt.getColumnValue(1, idBv), "v");
+
+  // Cross-check against getValue().
+  EXPECT_EQ(dt.getValue(1, 0), dt.getColumnValue(0, idAx));
+  EXPECT_EQ(dt.getValue(2, 0), dt.getColumnValue(0, idAy));
+  EXPECT_EQ(dt.getValue(1, 1), dt.getColumnValue(1, idBu));
+  EXPECT_EQ(dt.getValue(2, 1), dt.getColumnValue(1, idBv));
+
+  // Feature counts are per-column maxId; with 2 distinct values => maxId == 2.
+  EXPECT_EQ(dt.getFeatureCount(0), 2u);
+  EXPECT_EQ(dt.getFeatureCount(1), 2u);
+
+  // Out-of-range featureId throws.
+  EXPECT_THROW(dt.getColumnValue(0, 3u), std::out_of_range);
+  EXPECT_THROW(dt.getColumnValue(1, 999u), std::out_of_range);
 }

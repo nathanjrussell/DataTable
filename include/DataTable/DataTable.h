@@ -31,6 +31,7 @@ public:
   // No method below is valid unless parse() has completed successfully.
   std::uint64_t getColumnCount() const;
   std::string getColumnHeader(int col) const;
+  std::uint64_t getColumnIndex(const std::string& header) const;
   std::string getColumnHeaderJson() const;
 
   // Row offsets are byte offsets into the original CSV file.
@@ -47,6 +48,16 @@ public:
   // and resolving id->string in the per-chunk map file.
   // Row 0 is the header and is not supported.
   std::string getValue(std::uint64_t row, std::uint64_t col) const;
+
+  // Return the string corresponding to a per-column feature id (id->string dictionary lookup).
+  // featureId is the integer produced by lookupMap() for cells in this column.
+  // Row indexing isn't needed for this lookup.
+  std::string getColumnValue(std::uint64_t col, std::uint32_t featureId) const;
+
+  // Return the number of distinct non-empty mapped feature ids in a column.
+  // Since ids are sequential per-column, this equals the maximum id in the column dictionary.
+  // (Id 0 is reserved for empty/whitespace-only values.)
+  std::uint32_t getFeatureCount(std::uint64_t col) const;
 
   bool parseCompleted() const noexcept { return parseCompleted_; }
 

@@ -31,6 +31,130 @@ namespace DataTableLib {
 
 namespace {
 
+// Strict UTF-8 validation (RFC 3629).
+// Accepts ASCII and well-formed multi-byte sequences.
+// Rejects overlong encodings, surrogate halves, and code points > U+10FFFF.
+static bool isValidUtf8(const std::string& s) {
+  const unsigned char* p = reinterpret_cast<const unsigned char*>(s.data());
+  std::size_t i = 0;
+  const std::size_t n = s.size();
+
+  while (i < n) {
+    const unsigned char c0 = p[i];
+    if (c0 <= 0x7F) {
+      ++i;
+      continue;
+    }
+
+    // 2-byte sequence
+    if (c0 >= 0xC2 && c0 <= 0xDF) {
+      if (i + 1 >= n) return false;
+      const unsigned char c1 = p[i + 1];
+      if ((c1 & 0xC0) != 0x80) return false;
+      i += 2;
+      continue;
+    }
+
+    // 3-byte sequences
+    if (c0 == 0xE0) {
+      if (i + 2 >= n) return false;
+      const unsigned char c1 = p[i + 1];
+      const unsigned char c2 = p[i + 2];
+      if (c1 < 0xA0 || c1 > 0xBF) return false; // no overlong
+      if ((c2 & 0xC0) != 0x80) return false;
+      i += 3;
+      continue;
+    }
+    if (c0 >= 0xE1 && c0 <= 0xEC) {
+      if (i + 2 >= n) return false;
+      const unsigned char c1 = p[i + 1];
+      const unsigned char c2 = p[i + 2];
+      if ((c1 & 0xC0) != 0x80) return false;
+      if ((c2 & 0xC0) != 0x80) return false;
+      i += 3;
+      continue;
+    }
+    if (c0 == 0xED) {
+      // U+D800..U+DFFF surrogates are invalid in UTF-8
+      if (i + 2 >= n) return false;
+      const unsigned char c1 = p[i + 1];
+      const unsigned char c2 = p[i + 2];
+      if (c1 < 0x80 || c1 > 0x9F) return false;
+      if ((c2 & 0xC0) != 0x80) return false;
+      i += 3;
+      continue;
+    }
+    if (c0 >= 0xEE && c0 <= 0xEF) {
+      if (i + 2 >= n) return false;
+      const unsigned char c1 = p[i + 1];
+      const unsigned char c2 = p[i + 2];
+      if ((c1 & 0xC0) != 0x80) return false;
+      if ((c2 & 0xC0) != 0x80) return false;
+      i += 3;
+      continue;
+    }
+
+    // 4-byte sequences
+    if (c0 == 0xF0) {
+      if (i + 3 >= n) return false;
+      const unsigned char c1 = p[i + 1];
+      const unsigned char c2 = p[i + 2];
+      const unsigned char c3 = p[i + 3];
+      if (c1 < 0x90 || c1 > 0xBF) return false; // no overlong
+      if ((c2 & 0xC0) != 0x80) return false;
+      if ((c3 & 0xC0) != 0x80) return false;
+      i += 4;
+      continue;
+    }
+    if (c0 >= 0xF1 && c0 <= 0xF3) {
+      if (i + 3 >= n) return false;
+      const unsigned char c1 = p[i + 1];
+      const unsigned char c2 = p[i + 2];
+      const unsigned char c3 = p[i + 3];
+      if ((c1 & 0xC0) != 0x80) return false;
+      if ((c2 & 0xC0) != 0x80) return false;
+      if ((c3 & 0xC0) != 0x80) return false;
+      i += 4;
+      continue;
+    }
+    if (c0 == 0xF4) {
+      if (i + 3 >= n) return false;
+      const unsigned char c1 = p[i + 1];
+      const unsigned char c2 = p[i + 2];
+      const unsigned char c3 = p[i + 3];
+      if (c1 < 0x80 || c1 > 0x8F) return false; // <= U+10FFFF
+      if ((c2 & 0xC0) != 0x80) return false;
+      if ((c3 & 0xC0) != 0x80) return false;
+      i += 4;
+      continue;
+    }
+
+    return false;
+  }
+
+  return true;
+}
+
+static void validateHeadersUniqueUtf8OrThrow(const std::vector<std::string>& headers) {
+  std::unordered_map<std::string, std::size_t> seen;
+  seen.reserve(headers.size());
+
+  for (std::size_t i = 0; i < headers.size(); ++i) {
+    const std::string& h = headers[i];
+    if (!isValidUtf8(h)) {
+      throw std::runtime_error("Invalid UTF-8 in column header at index " + std::to_string(i));
+    }
+
+    auto it = seen.find(h);
+    if (it != seen.end()) {
+      throw std::runtime_error("Duplicate column header name '" + h + "' at index " + std::to_string(i) +
+                               " (already seen at index " + std::to_string(it->second) + ")");
+    }
+
+    seen.emplace(h, i);
+  }
+}
+
 // One instance for the whole library (this translation unit).
 std::unique_ptr<progressbar::ProgressBars> g_progressBars;
 
@@ -468,6 +592,22 @@ std::string DataTable::getColumnHeader(int col) const {
   throw std::runtime_error("Corrupt header_row.bin: unexpected EOF");
 }
 
+std::uint64_t DataTable::getColumnIndex(const std::string& header) const {
+  ensureParsed();
+
+  std::ifstream in(headerRowBinPath(outputDirectory_), std::ios::binary);
+  if (!in) throw std::runtime_error("Failed to open header_row.bin");
+
+  const std::uint64_t ncols = readU64(in);
+
+  for (std::uint64_t i = 0; i < ncols; ++i) {
+    const std::string s = readLenPrefixedString(in);
+    if (s == header) return i;
+  }
+
+  throw std::out_of_range("Column header not found");
+}
+
 std::string DataTable::getColumnHeaderJson() const {
   ensureParsed();
 
@@ -863,7 +1003,7 @@ void DataTable::locateRowOffsets(int threads) {
     // If we have a carry byte from the end of the previous buffer, process it first.
     if (hasCarry) {
       // We'll process carry as if it was at buf[-1]; its position is current pos.
-      // To do that, we treat it as the first byte and then continue with buf[0].
+      // To do that, we treat carry as the first byte and then continue with buf[0].
       const char c = carry;
       hasCarry = false;
 
@@ -1161,6 +1301,7 @@ void DataTable::parse(int threads, std::uint32_t chunkSize) {
   }
 
   const std::vector<std::string> headers = parseHeaderRow(in);
+  validateHeadersUniqueUtf8OrThrow(headers);
   const std::uint64_t ncols = static_cast<std::uint64_t>(headers.size());
 
   const std::filesystem::path headerPath = metaDir / "header_row.bin";
@@ -1287,12 +1428,170 @@ void DataTable::load(const std::string& directory) {
   parseCompleted_ = true;
 }
 
+// ---- Chunk column int->string maps container (one file per chunk) ----
+
+static std::filesystem::path chunkColumnMapsContainerPath(const std::string& outputDirectory, std::uint64_t chunkIndex) {
+  std::ostringstream name;
+  name << "chunk_" << chunkIndex << "_int_string_maps.bin";
+  return std::filesystem::path(outputDirectory) / "meta_data" / name.str();
+}
+
+struct IntStringMapBlockIndex {
+  std::uint64_t chunkCols = 0;
+  std::uint64_t firstCol = 0;
+  std::uint64_t lastCol = 0;
+  std::vector<std::uint64_t> offsets; // size = chunkCols + 1
+};
+
+static IntStringMapBlockIndex readChunkColumnMapsIndexOrThrow(std::istream& in) {
+  IntStringMapBlockIndex idx;
+  idx.chunkCols = readU64(in);
+  idx.firstCol = readU64(in);
+  if (idx.chunkCols == 0) throw std::runtime_error("Corrupt chunk int->string container: chunkCols=0");
+
+  idx.offsets.resize(static_cast<std::size_t>(idx.chunkCols) + 1);
+  in.read(reinterpret_cast<char*>(idx.offsets.data()),
+          static_cast<std::streamsize>(idx.offsets.size() * sizeof(std::uint64_t)));
+  if (!in) throw std::runtime_error("Corrupt chunk int->string container: missing offsets");
+
+  for (std::size_t i = 0; i + 1 < idx.offsets.size(); ++i) {
+    if (idx.offsets[i + 1] < idx.offsets[i]) {
+      throw std::runtime_error("Corrupt chunk int->string container: offsets not monotonic");
+    }
+  }
+
+  idx.lastCol = idx.firstCol + idx.chunkCols - 1;
+  return idx;
+}
+
+static void writeU64Raw(std::ostream& out, std::uint64_t v) {
+  out.write(reinterpret_cast<const char*>(&v), sizeof(v));
+  if (!out) throw std::runtime_error("Failed writing uint64");
+}
+
+static std::uint64_t tellpU64(std::ostream& out) {
+  const auto pos = out.tellp();
+  if (pos < 0) throw std::runtime_error("tellp failed");
+  return static_cast<std::uint64_t>(pos);
+}
+
+static void writeIntStringMapBlock(std::ostream& out, const std::vector<std::string>& idToString) {
+  if (idToString.empty()) throw std::runtime_error("idToString empty");
+
+  const std::uint32_t maxId = static_cast<std::uint32_t>(idToString.size() - 1);
+  out.write(reinterpret_cast<const char*>(&maxId), sizeof(maxId));
+  if (!out) throw std::runtime_error("Failed writing maxId");
+
+  const std::size_t offsetsCount = static_cast<std::size_t>(maxId) + 2;
+  std::vector<std::uint32_t> offsets(offsetsCount, 0u);
+
+  std::uint64_t cursor = 0;
+  for (std::uint32_t id = 0; id <= maxId; ++id) {
+    offsets[static_cast<std::size_t>(id)] = static_cast<std::uint32_t>(cursor);
+    cursor += static_cast<std::uint64_t>(idToString[static_cast<std::size_t>(id)].size());
+    if (cursor > std::numeric_limits<std::uint32_t>::max()) {
+      throw std::runtime_error("int->string blob exceeds 4GB");
+    }
+  }
+  offsets[static_cast<std::size_t>(maxId) + 1] = static_cast<std::uint32_t>(cursor);
+
+  out.write(reinterpret_cast<const char*>(offsets.data()),
+            static_cast<std::streamsize>(offsets.size() * sizeof(std::uint32_t)));
+  if (!out) throw std::runtime_error("Failed writing offsets");
+
+  for (std::uint32_t id = 0; id <= maxId; ++id) {
+    const auto& s = idToString[static_cast<std::size_t>(id)];
+    if (!s.empty()) {
+      out.write(s.data(), static_cast<std::streamsize>(s.size()));
+      if (!out) throw std::runtime_error("Failed writing string bytes");
+    }
+  }
+}
+
+static std::string readStringFromIntStringMapBlock(std::istream& in, std::uint64_t blockStart, std::uint32_t id) {
+  in.clear();
+  in.seekg(static_cast<std::streamoff>(blockStart), std::ios::beg);
+  if (!in) throw std::runtime_error("Failed seeking to column map block");
+
+  std::uint32_t maxId = 0;
+  in.read(reinterpret_cast<char*>(&maxId), sizeof(maxId));
+  if (!in) throw std::runtime_error("Failed reading maxId");
+  if (id > maxId) throw std::runtime_error("id out of range for this column");
+
+  const std::uint64_t offsetsCount = static_cast<std::uint64_t>(maxId) + 2;
+  const std::uint64_t offsetsBase = sizeof(std::uint32_t);
+
+  std::uint32_t start = 0;
+  std::uint32_t end = 0;
+
+  in.seekg(static_cast<std::streamoff>(blockStart + offsetsBase + static_cast<std::uint64_t>(id) * sizeof(std::uint32_t)),
+           std::ios::beg);
+  in.read(reinterpret_cast<char*>(&start), sizeof(start));
+  in.seekg(static_cast<std::streamoff>(blockStart + offsetsBase + static_cast<std::uint64_t>(id + 1) * sizeof(std::uint32_t)),
+           std::ios::beg);
+  in.read(reinterpret_cast<char*>(&end), sizeof(end));
+  if (!in) throw std::runtime_error("Failed reading offsets");
+  if (end < start) throw std::runtime_error("corrupt offsets");
+
+  const std::uint32_t len = end - start;
+  const std::uint64_t blobBase = sizeof(std::uint32_t) + offsetsCount * sizeof(std::uint32_t);
+
+  in.seekg(static_cast<std::streamoff>(blockStart + blobBase + start), std::ios::beg);
+  if (!in) throw std::runtime_error("Failed seeking blob");
+
+  std::string s;
+  s.resize(len);
+  if (len > 0) {
+    in.read(s.data(), static_cast<std::streamsize>(len));
+    if (!in) throw std::runtime_error("Failed reading string");
+  }
+  return s;
+}
+
+static void writeChunkColumnMapsContainer(const std::string& outputDirectory,
+                                         std::uint64_t chunkIndex,
+                                         std::uint64_t firstCol,
+                                         const std::vector<std::vector<std::string>>& colIdToString) {
+  const std::uint64_t chunkCols = static_cast<std::uint64_t>(colIdToString.size());
+  if (chunkCols == 0) throw std::runtime_error("chunkCols is 0");
+
+  const auto path = chunkColumnMapsContainerPath(outputDirectory, chunkIndex);
+  std::ofstream out(path, std::ios::binary | std::ios::trunc);
+  if (!out) throw std::runtime_error("Failed to open chunk column maps container: " + path.string());
+
+  writeU64Raw(out, chunkCols);
+  writeU64Raw(out, firstCol);
+
+  const std::uint64_t offsetsTablePos = tellpU64(out);
+  for (std::uint64_t i = 0; i < chunkCols + 1; ++i) {
+    writeU64Raw(out, 0);
+  }
+
+  std::vector<std::uint64_t> offsets(static_cast<std::size_t>(chunkCols) + 1, 0);
+
+  for (std::uint64_t i = 0; i < chunkCols; ++i) {
+    offsets[static_cast<std::size_t>(i)] = tellpU64(out);
+    writeIntStringMapBlock(out, colIdToString[static_cast<std::size_t>(i)]);
+  }
+  offsets[static_cast<std::size_t>(chunkCols)] = tellpU64(out);
+
+  out.seekp(static_cast<std::streamoff>(offsetsTablePos), std::ios::beg);
+  if (!out) throw std::runtime_error("Failed seeking to offsets table for patch");
+
+  out.write(reinterpret_cast<const char*>(offsets.data()),
+            static_cast<std::streamsize>(offsets.size() * sizeof(std::uint64_t)));
+  if (!out) throw std::runtime_error("Failed writing patched offsets table");
+
+  out.flush();
+  if (!out) throw std::runtime_error("Failed flushing chunk column maps container");
+}
+
+// ----------------- Chunk parsing + lookup/getValue -----------------
+
 namespace {
 
 static std::string normalizeFieldToKey(const std::string& raw, bool wasQuoted) {
   if (wasQuoted) {
-    // Quoted fields preserve whitespace.
-    // Treat quoted empty and quoted whitespace-only as empty.
     bool anyNonSpace = false;
     for (unsigned char ch : raw) {
       if (std::isspace(ch) == 0) {
@@ -1302,20 +1601,14 @@ static std::string normalizeFieldToKey(const std::string& raw, bool wasQuoted) {
     }
     return anyNonSpace ? raw : std::string();
   }
-
-  // Unquoted fields are trimmed.
-  std::string t = trimAsciiWhitespace(raw);
-  return t;
+  return trimAsciiWhitespace(raw);
 }
 
 struct FieldToken {
-  std::string key;   // normalized key used for mapping ("" means empty)
+  std::string key;
   bool isEmpty = true;
 };
 
-// Parse a single CSV field starting at the current stream position.
-// Assumes the stream is positioned at the start of a field (not on a delimiter).
-// Consumes up to (but not including) the delimiter/newline/EOF.
 static FieldToken readOneField(std::istream& in, char& delimOut) {
   std::string raw;
   raw.reserve(64);
@@ -1324,15 +1617,13 @@ static FieldToken readOneField(std::istream& in, char& delimOut) {
   bool wasQuoted = false;
   bool afterClosingQuote = false;
 
-  // Skip leading whitespace before a field (for unquoted trimming behavior).
-  // But if the field is quoted and preceded by whitespace, that's allowed and the whitespace is ignored.
   while (true) {
-    int ci = in.peek();
+    const int ci = in.peek();
     if (ci == EOF) {
       delimOut = '\0';
       return FieldToken{std::string(), true};
     }
-    char c = static_cast<char>(ci);
+    const char c = static_cast<char>(ci);
     if (c == ' ' || c == '\t') {
       in.get();
       continue;
@@ -1340,7 +1631,6 @@ static FieldToken readOneField(std::istream& in, char& delimOut) {
     break;
   }
 
-  // Quoted field?
   if (in.peek() == '"') {
     in.get();
     inQuotes = true;
@@ -1368,7 +1658,6 @@ static FieldToken readOneField(std::istream& in, char& delimOut) {
         continue;
       }
 
-      // Keep newlines as actual newlines in the raw key.
       if (c == '\r') {
         if (in.peek() == '\n') in.get();
         c = '\n';
@@ -1377,9 +1666,7 @@ static FieldToken readOneField(std::istream& in, char& delimOut) {
       continue;
     }
 
-    // Not in quotes.
     if (afterClosingQuote) {
-      // Ignore whitespace after closing quote until delimiter/newline.
       if (std::isspace(static_cast<unsigned char>(c)) != 0) {
         continue;
       }
@@ -1411,11 +1698,8 @@ static FieldToken readOneField(std::istream& in, char& delimOut) {
 }
 
 static std::uint8_t bitsRequired(std::uint32_t maxValue) {
-  // Need at least 1 bit to represent 0.
   std::uint8_t bits = 1;
-  while ((maxValue >> bits) != 0 && bits < 32) {
-    ++bits;
-  }
+  while ((maxValue >> bits) != 0 && bits < 32) ++bits;
   return bits;
 }
 
@@ -1426,23 +1710,15 @@ void DataTable::parseChunks(int /*threads*/) {
   if (rowCount_ < 2) throw std::runtime_error("No data rows present");
   if (chunkSize_ == 0) throw std::runtime_error("chunkSize is 0");
 
-  const std::uint64_t dataRowCount = rowCount_ - 1; // exclude header row
-
+  const std::uint64_t dataRowCount = rowCount_ - 1;
   const std::uint64_t totalChunks =
-      (columnCount_ + static_cast<std::uint64_t>(chunkSize_) - 1) /
-      static_cast<std::uint64_t>(chunkSize_);
+      (columnCount_ + static_cast<std::uint64_t>(chunkSize_) - 1) / static_cast<std::uint64_t>(chunkSize_);
 
-  const int pbColumnChunks = progressCreate(
-      totalChunks,
-      "Column chunks",
-      progressbar::ProgressBars::Color::Green);
+  const int pbColumnChunks = progressCreate(totalChunks, "Column chunks", progressbar::ProgressBars::Color::Green);
   progressSet(pbColumnChunks, 0);
 
   std::ofstream widthOut(columnChunkWidthPath(outputDirectory_), std::ios::binary | std::ios::trunc);
   if (!widthOut) throw std::runtime_error("Failed to open meta_data/column_chunk_width.bin");
-
-  // We'll read from the original CSV using rowOffsets_ to avoid scanning from the beginning repeatedly.
-  // Current implementation treats row 0 as header and ignores it for mapped output.
 
   for (std::uint64_t chunkIndex = 0; chunkIndex < totalChunks; ++chunkIndex) {
     const std::uint64_t firstCol = chunkIndex * static_cast<std::uint64_t>(chunkSize_);
@@ -1450,18 +1726,20 @@ void DataTable::parseChunks(int /*threads*/) {
         std::min(firstCol + static_cast<std::uint64_t>(chunkSize_) - 1, columnCount_ - 1);
     const std::uint64_t chunkCols = lastCol - firstCol + 1;
 
-    // Chunk-level dictionary:
-    // - id 0 is reserved for empty
-    // - ids are consistent across all columns in the chunk
-    std::unordered_map<std::string, std::uint32_t> chunkMap;
-    chunkMap.reserve(1024);
-    std::vector<std::string> idToString;
-    idToString.reserve(1024);
-    idToString.emplace_back(std::string());
+    struct ColDict {
+      std::unordered_map<std::string, std::uint32_t> map;
+      std::vector<std::string> idToString;
+    };
 
-    // For writing transposed, we need per-column sequences.
-    std::vector<std::vector<std::uint32_t>> colValues;
-    colValues.resize(static_cast<std::size_t>(chunkCols));
+    std::vector<ColDict> dicts(static_cast<std::size_t>(chunkCols));
+    for (auto& d : dicts) {
+      d.map.reserve(1024);
+      d.idToString.reserve(1024);
+      d.idToString.emplace_back(std::string());
+      d.map.emplace(d.idToString[0], 0u);
+    }
+
+    std::vector<std::vector<std::uint32_t>> colValues(static_cast<std::size_t>(chunkCols));
     for (auto& v : colValues) v.resize(static_cast<std::size_t>(dataRowCount));
 
     std::uint32_t maxIdThisChunk = 0;
@@ -1488,11 +1766,12 @@ void DataTable::parseChunks(int /*threads*/) {
 
         std::uint32_t id = 0;
         if (!tok.isEmpty) {
-          auto it = chunkMap.find(tok.key);
-          if (it == chunkMap.end()) {
-            const std::uint32_t nextId = static_cast<std::uint32_t>(idToString.size());
-            it = chunkMap.emplace(tok.key, nextId).first;
-            idToString.push_back(tok.key);
+          auto& d = dicts[static_cast<std::size_t>(localCol)];
+          auto it = d.map.find(tok.key);
+          if (it == d.map.end()) {
+            const std::uint32_t nextId = static_cast<std::uint32_t>(d.idToString.size());
+            d.idToString.push_back(tok.key);
+            it = d.map.emplace(d.idToString.back(), nextId).first;
             if (nextId > maxIdThisChunk) maxIdThisChunk = nextId;
           }
           id = it->second;
@@ -1500,51 +1779,20 @@ void DataTable::parseChunks(int /*threads*/) {
 
         colValues[static_cast<std::size_t>(localCol)][static_cast<std::size_t>(dataRow)] = id;
 
-        if (localCol + 1 < chunkCols) {
-          if (delim != ',') {
-            throw std::runtime_error("Row ended early while reading chunk columns");
-          }
+        if (localCol + 1 < chunkCols && delim != ',') {
+          throw std::runtime_error("Row ended early while reading chunk columns");
         }
       }
     }
 
-    // Write chunk-level int->string map in the requested format:
-    //   uint32_t maxId
-    //   uint32_t offsets[maxId + 2]  (includes terminal offset)
-    //   blob bytes of all strings in id order
+    // Write per-column int->string maps to one file.
     {
-      const auto path = chunkIntStringMapPath(outputDirectory_, chunkIndex);
-      std::ofstream out(path, std::ios::binary | std::ios::trunc);
-      if (!out) throw std::runtime_error("Failed to open chunk map file: " + path.string());
-
-      const std::uint32_t maxId = static_cast<std::uint32_t>(idToString.size() - 1);
-      out.write(reinterpret_cast<const char*>(&maxId), sizeof(maxId));
-      if (!out) throw std::runtime_error("Failed writing maxId");
-
-      const std::size_t offsetsCount = static_cast<std::size_t>(maxId) + 2;
-      std::vector<std::uint32_t> offsets(offsetsCount, 0u);
-
-      std::uint64_t cursor = 0;
-      for (std::uint32_t id = 0; id <= maxId; ++id) {
-        offsets[static_cast<std::size_t>(id)] = static_cast<std::uint32_t>(cursor);
-        cursor += static_cast<std::uint64_t>(idToString[static_cast<std::size_t>(id)].size());
-        if (cursor > std::numeric_limits<std::uint32_t>::max()) {
-          throw std::runtime_error("chunk int->string blob exceeds 4GB");
-        }
+      std::vector<std::vector<std::string>> perCol;
+      perCol.reserve(static_cast<std::size_t>(chunkCols));
+      for (std::uint64_t localCol = 0; localCol < chunkCols; ++localCol) {
+        perCol.push_back(dicts[static_cast<std::size_t>(localCol)].idToString);
       }
-      offsets[static_cast<std::size_t>(maxId) + 1] = static_cast<std::uint32_t>(cursor);
-
-      out.write(reinterpret_cast<const char*>(offsets.data()),
-                static_cast<std::streamsize>(offsets.size() * sizeof(std::uint32_t)));
-      if (!out) throw std::runtime_error("Failed writing offsets");
-
-      for (std::uint32_t id = 0; id <= maxId; id++) {
-        const auto& s = idToString[static_cast<std::size_t>(id)];
-        if (!s.empty()) {
-          out.write(s.data(), static_cast<std::streamsize>(s.size()));
-          if (!out) throw std::runtime_error("Failed writing string bytes");
-        }
-      }
+      writeChunkColumnMapsContainer(outputDirectory_, chunkIndex, firstCol, perCol);
     }
 
     const std::uint8_t bitWidth = bitsRequired(maxIdThisChunk);
@@ -1552,17 +1800,14 @@ void DataTable::parseChunks(int /*threads*/) {
     if (!widthOut) throw std::runtime_error("Failed writing chunk bit width");
 
     BitWriter bw(columnChunkBinPath(outputDirectory_, firstCol, lastCol));
-
     for (std::uint64_t localCol = 0; localCol < chunkCols; ++localCol) {
       const auto& vals = colValues[static_cast<std::size_t>(localCol)];
       for (std::uint64_t dataRow = 0; dataRow < dataRowCount; ++dataRow) {
         bw.write(vals[static_cast<std::size_t>(dataRow)], bitWidth);
       }
     }
-
     bw.flush();
 
-    // Progress update: one tick per completed column chunk.
     progressTick(pbColumnChunks);
   }
 
@@ -1592,15 +1837,13 @@ std::uint32_t DataTable::lookupMap(std::uint64_t row, std::uint64_t col) const {
   if (!widthIn) throw std::runtime_error("Failed to open meta_data/column_chunk_width.bin");
 
   widthIn.seekg(static_cast<std::streamoff>(chunkIndex), std::ios::beg);
-  if (!widthIn) throw std::runtime_error("Failed seeking mapped_data/column_chunk_width.bin");
+  if (!widthIn) throw std::runtime_error("Failed seeking meta_data/column_chunk_width.bin");
 
   std::uint8_t bitWidth = 0;
   widthIn.read(reinterpret_cast<char*>(&bitWidth), 1);
   if (!widthIn) throw std::runtime_error("Failed reading chunk bit width");
   if (bitWidth == 0 || bitWidth > 32) throw std::runtime_error("Invalid chunk bit width");
 
-  // Transposed layout: for each column in the chunk, store all data rows sequentially.
-  // idx = localCol * dataRowCount + dataRowIndex
   const std::uint64_t idx = localCol * dataRowCount + dataRowIndex;
   const std::uint64_t bitOffset = idx * static_cast<std::uint64_t>(bitWidth);
 
@@ -1617,10 +1860,29 @@ std::string DataTable::getValue(std::uint64_t row, std::uint64_t col) const {
   if (row == 0) throw std::runtime_error("getValue() is not supported for header row");
 
   const std::uint32_t id = lookupMap(row, col);
-
   const std::uint64_t chunkIndex = col / static_cast<std::uint64_t>(chunkSize_);
-  const auto path = chunkIntStringMapPath(outputDirectory_, chunkIndex);
 
+  // New per-column map container.
+  {
+    const auto containerPath = chunkColumnMapsContainerPath(outputDirectory_, chunkIndex);
+    if (std::filesystem::exists(containerPath)) {
+      std::ifstream in(containerPath, std::ios::binary);
+      if (!in) throw std::runtime_error("Failed to open chunk maps container: " + containerPath.string());
+
+      const auto idx = readChunkColumnMapsIndexOrThrow(in);
+      if (col < idx.firstCol || col > idx.lastCol) {
+        throw std::runtime_error("Corrupt chunk maps container: column out of chunk range");
+      }
+
+      const std::uint64_t localCol = col - idx.firstCol;
+      const std::uint64_t blockStart = idx.offsets[static_cast<std::size_t>(localCol)];
+
+      return readStringFromIntStringMapBlock(in, blockStart, id);
+    }
+  }
+
+  // Old fallback.
+  const auto path = chunkIntStringMapPath(outputDirectory_, chunkIndex);
   std::ifstream in(path, std::ios::binary);
   if (!in) throw std::runtime_error("Failed to open chunk map file: " + path.string());
 
@@ -1660,5 +1922,128 @@ std::string DataTable::getValue(std::uint64_t row, std::uint64_t col) const {
   return s;
 }
 
-}  // namespace DataTableLib
+std::string DataTable::getColumnValue(std::uint64_t col, std::uint32_t featureId) const {
+  ensureParsed();
+  if (col >= columnCount_) throw std::out_of_range("col out of range");
+
+  const std::uint64_t chunkIndex = col / static_cast<std::uint64_t>(chunkSize_);
+
+  // New per-column map container.
+  {
+    const auto containerPath = chunkColumnMapsContainerPath(outputDirectory_, chunkIndex);
+    if (std::filesystem::exists(containerPath)) {
+      std::ifstream in(containerPath, std::ios::binary);
+      if (!in) throw std::runtime_error("Failed to open chunk maps container: " + containerPath.string());
+
+      const auto idx = readChunkColumnMapsIndexOrThrow(in);
+      if (col < idx.firstCol || col > idx.lastCol) {
+        throw std::runtime_error("Corrupt chunk maps container: column out of chunk range");
+      }
+
+      const std::uint64_t localCol = col - idx.firstCol;
+      const std::uint64_t blockStart = idx.offsets[static_cast<std::size_t>(localCol)];
+
+      // Validate bounds quickly so we throw out_of_range for bad featureId.
+      in.clear();
+      in.seekg(static_cast<std::streamoff>(blockStart), std::ios::beg);
+      if (!in) throw std::runtime_error("Failed seeking to column map block");
+      std::uint32_t maxId = 0;
+      in.read(reinterpret_cast<char*>(&maxId), sizeof(maxId));
+      if (!in) throw std::runtime_error("Failed reading maxId");
+      if (featureId > maxId) throw std::out_of_range("featureId out of range");
+
+      return readStringFromIntStringMapBlock(in, blockStart, featureId);
+    }
+  }
+
+  // Old fallback.
+  {
+    const auto path = chunkIntStringMapPath(outputDirectory_, chunkIndex);
+    std::ifstream in(path, std::ios::binary);
+    if (!in) throw std::runtime_error("Failed to open chunk map file: " + path.string());
+
+    std::uint32_t maxId = 0;
+    in.read(reinterpret_cast<char*>(&maxId), sizeof(maxId));
+    if (!in) throw std::runtime_error("Failed reading maxId");
+    if (featureId > maxId) throw std::out_of_range("featureId out of range");
+
+    const std::uint64_t offsetsCount = static_cast<std::uint64_t>(maxId) + 2;
+    const std::uint64_t offsetsBase = sizeof(std::uint32_t);
+
+    std::uint32_t start = 0;
+    std::uint32_t end = 0;
+
+    in.seekg(static_cast<std::streamoff>(offsetsBase + static_cast<std::uint64_t>(featureId) * sizeof(std::uint32_t)),
+             std::ios::beg);
+    in.read(reinterpret_cast<char*>(&start), sizeof(start));
+    in.seekg(static_cast<std::streamoff>(offsetsBase + static_cast<std::uint64_t>(featureId + 1) * sizeof(std::uint32_t)),
+             std::ios::beg);
+    in.read(reinterpret_cast<char*>(&end), sizeof(end));
+    if (!in) throw std::runtime_error("Failed reading offsets");
+    if (end < start) throw std::runtime_error("corrupt offsets");
+
+    const std::uint32_t len = end - start;
+    const std::uint64_t blobBase = sizeof(std::uint32_t) + offsetsCount * sizeof(std::uint32_t);
+
+    in.seekg(static_cast<std::streamoff>(blobBase + start), std::ios::beg);
+    if (!in) throw std::runtime_error("Failed seeking blob");
+
+    std::string s;
+    s.resize(len);
+    if (len > 0) {
+      in.read(s.data(), static_cast<std::streamsize>(len));
+      if (!in) throw std::runtime_error("Failed reading string");
+    }
+    return s;
+  }
+}
+
+std::uint32_t DataTable::getFeatureCount(std::uint64_t col) const {
+  ensureParsed();
+  if (col >= columnCount_) throw std::out_of_range("col out of range");
+
+  const std::uint64_t chunkIndex = col / static_cast<std::uint64_t>(chunkSize_);
+
+  // New per-column map container.
+  {
+    const auto containerPath = chunkColumnMapsContainerPath(outputDirectory_, chunkIndex);
+    if (std::filesystem::exists(containerPath)) {
+      std::ifstream in(containerPath, std::ios::binary);
+      if (!in) throw std::runtime_error("Failed to open chunk maps container: " + containerPath.string());
+
+      const auto idx = readChunkColumnMapsIndexOrThrow(in);
+      if (col < idx.firstCol || col > idx.lastCol) {
+        throw std::runtime_error("Corrupt chunk maps container: column out of chunk range");
+      }
+
+      const std::uint64_t localCol = col - idx.firstCol;
+      const std::uint64_t blockStart = idx.offsets[static_cast<std::size_t>(localCol)];
+
+      in.clear();
+      in.seekg(static_cast<std::streamoff>(blockStart), std::ios::beg);
+      if (!in) throw std::runtime_error("Failed seeking to column map block");
+
+      std::uint32_t maxId = 0;
+      in.read(reinterpret_cast<char*>(&maxId), sizeof(maxId));
+      if (!in) throw std::runtime_error("Failed reading maxId");
+
+      // Distinct non-empty features; id 0 is the empty sentinel.
+      return maxId;
+    }
+  }
+
+  // Old fallback.
+  {
+    const auto path = chunkIntStringMapPath(outputDirectory_, chunkIndex);
+    std::ifstream in(path, std::ios::binary);
+    if (!in) throw std::runtime_error("Failed to open chunk map file: " + path.string());
+
+    std::uint32_t maxId = 0;
+    in.read(reinterpret_cast<char*>(&maxId), sizeof(maxId));
+    if (!in) throw std::runtime_error("Failed reading maxId");
+    return maxId;
+  }
+}
+
+} // namespace
 

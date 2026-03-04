@@ -29,9 +29,7 @@ int main() {
   std::cout << "Row count: " << rowCount << "\n";
   std::cout << "Column count: " << colCount << "\n";
 
-/*
-  // Hard-coded rows to print (row 0 is the header).
-  const std::uint64_t rowsToPrint[] = {0, 1, 2, 3, 4, 10, 100, 1000, 5834};
+
 
   for (int row = 0; row < rowCount; ++row) {
       const std::uint64_t offset = dt.getRowOffset(row);
@@ -47,10 +45,10 @@ int main() {
     std::cout<< "Value for row 10, col 2: " << dt.getValue(10, 2) << "\n";
     for (int row = 1; row < rowCount; ++row) {
         for (int col = 0; col < colCount; ++col) {
-            std::cout << "Value for row " << row << ", col " << col << ": " << dt.getValue(row, col) << "\n";
+            std::cout << "Value for row " << row << ", col " << col << ": " << dt.getValue(row, col) << ": " << dt.lookupMap(row,col)<<"\n";
         }
     }
-*/
+
 
 
   return 0;
