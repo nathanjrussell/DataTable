@@ -396,3 +396,52 @@ TEST(DataTable, ColumnDictionary_GetColumnValue_And_GetFeatureCount) {
   EXPECT_THROW(dt.getColumnValue(0, 3u), std::out_of_range);
   EXPECT_THROW(dt.getColumnValue(1, 999u), std::out_of_range);
 }
+
+TEST(DataTable, BitPacking_LookupMap_CrossesByteBoundaries) {
+  const auto outDir = makeTempDir("bitpacking_cross_byte");
+  const auto csvPath = outDir / "in.csv";
+
+  // One-column dataset with 8 distinct non-empty values => maxId=8 => bitWidth=4.
+  // We want a non-multiple-of-8 bitWidth so cell boundaries cross bytes frequently.
+  // Use 7 distinct values so maxId=7 => bitWidth=3.
+  // Value sequence repeats 1..7 over many rows.
+  std::ostringstream csv;
+  csv << "A\n";
+  const int repeats = 8; // 8*7=56 rows
+  for (int k = 0; k < repeats; ++k) {
+    for (int i = 1; i <= 7; ++i) {
+      csv << "v" << i << "\n";
+    }
+  }
+
+  writeTextFile(csvPath, csv.str());
+
+  DataTable dt(csvPath.string(), outDir.string());
+  dt.parse(/*threads=*/1, /*chunkSize=*/1);
+
+  ASSERT_TRUE(dt.parseCompleted());
+  ASSERT_EQ(dt.getColumnCount(), 1u);
+  ASSERT_EQ(dt.getRowCount(), static_cast<std::uint64_t>(1 + repeats * 7));
+
+  // Dictionary should be first-seen order: v1..v7 mapped to ids 1..7.
+  EXPECT_EQ(dt.getFeatureCount(0), 7u);
+  for (std::uint32_t id = 1; id <= 7; ++id) {
+    EXPECT_EQ(dt.getColumnValue(0, id), "v" + std::to_string(id));
+  }
+
+  // Verify the packed reader returns correct ids across many rows.
+  std::uint64_t row = 1;
+  for (int k = 0; k < repeats; ++k) {
+    for (std::uint32_t wantId = 1; wantId <= 7; ++wantId, ++row) {
+      const std::uint32_t gotId = dt.lookupMap(row, 0);
+      ASSERT_EQ(gotId, wantId) << "row=" << row;
+
+      // Round-trip invariant should hold too.
+      const std::string v1 = dt.getValue(row, 0);
+      const std::string v2 = dt.getColumnValue(0, gotId);
+      const std::string want = "v" + std::to_string(wantId);
+      ASSERT_EQ(v1, want) << "row=" << row;
+      ASSERT_EQ(v2, want) << "row=" << row;
+    }
+  }
+}
